@@ -14,13 +14,18 @@ interface UiState {
 
 export const useUiStore = create<UiState>((set) => ({
   sidebarOpen: true,
-  theme: 'system',
+  theme: typeof window !== 'undefined' ? (localStorage.getItem('theme') as any) || 'system' : 'system',
   isLoaderVisible: false,
   activeModal: null,
 
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
-  setTheme: (theme) => set({ theme }),
+  setTheme: (theme) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', theme);
+    }
+    set({ theme });
+  },
   showLoader: (visible) => set({ isLoaderVisible: visible }),
   openModal: (modalName) => set({ activeModal: modalName }),
 }));

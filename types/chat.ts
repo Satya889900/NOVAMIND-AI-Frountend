@@ -9,6 +9,7 @@ export interface Message {
   type: 'text' | 'image' | 'file';
   fileUrl?: string;
   fileName?: string;
+  isEdited?: boolean;
   createdAt: string;
   updatedAt: string;
 }

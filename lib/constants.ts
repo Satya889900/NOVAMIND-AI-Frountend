@@ -6,10 +6,26 @@ export const API_ROUTES = {
     ME: '/auth/me',
     REFRESH: '/auth/refresh',
   },
-  CHAT: {
-    ROOMS: '/rooms',
-    MESSAGES: (roomId: string) => `/rooms/${roomId}/messages`,
-    USERS: '/users',
+  CONVERSATIONS: {
+    BASE: '/conversations',
+    BY_ID: (id: string) => `/conversations/${id}`,
+  },
+  MESSAGES: {
+    BY_ROOM: (roomId: string) => `/conversations/${roomId}/messages`,
+    BY_ID: (messageId: string) => `/messages/${messageId}`,
+  },
+  USERS: {
+    BASE: '/users',
+    BY_ID: (id: string) => `/users/${id}`,
+    PROFILE: '/users/profile',
+  },
+  AI: {
+    CHAT: '/ai/chat',
+  },
+  DOCUMENTS: {
+    BASE: '/documents',
+    UPLOAD: '/documents/upload',
+    BY_ID: (id: string) => `/documents/${id}`,
   },
 };
 

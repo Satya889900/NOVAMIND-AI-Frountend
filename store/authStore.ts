@@ -34,13 +34,17 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   login: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await authService.login(data);
-      get().setToken(res.token);
-      set({ user: res.user, isAuthenticated: true, isLoading: false });
-      socketService.connect(res.token);
+      const response = await authService.login(data);
+      
+      get().setToken(response.token);
+      set({ user: response.user, isAuthenticated: true, isLoading: false });
+      
+      try {
+        socketService.connect(response.token);
+      } catch (e) {}
     } catch (err: any) {
       set({
-        error: err.response?.data?.message || 'Login failed. Please check credentials.',
+        error: err.message || 'Login failed. Please check credentials.',
         isLoading: false,
       });
       throw err;
@@ -50,13 +54,17 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   register: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await authService.register(data);
-      get().setToken(res.token);
-      set({ user: res.user, isAuthenticated: true, isLoading: false });
-      socketService.connect(res.token);
+      const response = await authService.register(data);
+      
+      get().setToken(response.token);
+      set({ user: response.user, isAuthenticated: true, isLoading: false });
+      
+      try {
+        socketService.connect(response.token);
+      } catch (e) {}
     } catch (err: any) {
       set({
-        error: err.response?.data?.message || 'Registration failed.',
+        error: err.message || 'Registration failed.',
         isLoading: false,
       });
       throw err;
@@ -71,7 +79,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     } finally {
       get().setToken(null);
       set({ user: null, isAuthenticated: false });
-      socketService.disconnect();
+      try {
+        socketService.disconnect();
+      } catch (e) {}
     }
   },
 
@@ -85,7 +95,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     try {
       const user = await authService.getMe();
       set({ user, isAuthenticated: true, isLoading: false });
-      socketService.connect(token);
+      try {
+        socketService.connect(token);
+      } catch (e) {}
     } catch (err) {
       get().setToken(null);
       set({ user: null, isAuthenticated: false, isLoading: false });

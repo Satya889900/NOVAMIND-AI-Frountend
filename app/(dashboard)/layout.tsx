@@ -6,6 +6,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { Navbar } from '../../components/common/Navbar';
 import { Loader } from '../../components/common/Loader';
 
+import { DashboardSidebar } from '../../components/common/DashboardSidebar';
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
@@ -28,7 +30,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
       <Navbar />
       <div className="flex-1 flex overflow-hidden">
-        {children}
+        <DashboardSidebar />
+        <main className="flex-1 overflow-hidden relative">
+          {children}
+        </main>
       </div>
     </div>
   );

@@ -39,3 +39,14 @@
   margin-bottom: 8px;
   padding-left: 2em;
 }
+
+/* Dark Mode Overrides */
+.dark .markdown-body code {
+  background-color: rgba(110, 118, 129, 0.4);
+  color: #e6edf3;
+}
+
+.dark .markdown-body pre {
+  background-color: rgba(110, 118, 129, 0.15);
+}
+
