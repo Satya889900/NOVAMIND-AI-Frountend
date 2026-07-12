@@ -97,18 +97,55 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         socketService.sendMessage(roomId, content);
       } catch (e) {}
 
-      // 2. Persist the message via REST API to the Express backend
+      // --- OPTIMISTIC UI: Show the message instantly ---
+      const tempMessageId = `temp-msg-${Date.now()}`;
+      const optimisticMessage: Message = {
+        id: tempMessageId,
+        roomId,
+        senderId: user.id,
+        sender: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          avatarUrl: user.avatarUrl,
+          status: 'online',
+          createdAt: user.createdAt || new Date().toISOString(),
+          updatedAt: user.updatedAt || new Date().toISOString(),
+        },
+        content,
+        type: 'text',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const { addMessage, removeMessageLocally, setTyping, fetchRooms } = useChatStore.getState();
+      
+      // Instantly add user's message to UI
+      addMessage(roomId, optimisticMessage);
+      
+      // Instantly show AI is typing... (simulate waiting for AI)
+      setTyping(roomId, 'NovaMind AI', true);
+
+      // 2. Persist the message via REST API to the Express backend (and get AI reply)
       try {
         const result = await messageService.sendChatMessage(roomId, {
           content,
           type: 'text',
         });
 
-        const apiMsg = result.data;
-        const newMessage: Message = {
-          id: apiMsg._id,
-          roomId: apiMsg.conversationId,
-          senderId: apiMsg.senderId,
+        // Turn off AI typing indicator
+        setTyping(roomId, 'NovaMind AI', false);
+
+        // Remove the temporary optimistic user message
+        removeMessageLocally(roomId, tempMessageId);
+
+        const apiUserMsg = result.data.userMessage;
+        const apiAiMsg = result.data.aiReply;
+
+        const newUserMessage: Message = {
+          id: apiUserMsg._id,
+          roomId: apiUserMsg.conversationId,
+          senderId: apiUserMsg.senderId,
           sender: {
             id: user.id,
             name: user.name,
@@ -118,37 +155,43 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             createdAt: user.createdAt || new Date().toISOString(),
             updatedAt: user.updatedAt || new Date().toISOString(),
           },
-          content: apiMsg.content,
-          type: apiMsg.type,
-          createdAt: apiMsg.createdAt,
-          updatedAt: apiMsg.updatedAt,
+          content: apiUserMsg.content,
+          type: apiUserMsg.type,
+          createdAt: apiUserMsg.createdAt,
+          updatedAt: apiUserMsg.updatedAt,
         };
 
-        addMessage(roomId, newMessage);
+        // Add real user message from DB
+        addMessage(roomId, newUserMessage);
+
+        // Add real AI message
+        if (apiAiMsg) {
+          const aiMessage: Message = {
+            id: apiAiMsg._id,
+            roomId: apiAiMsg.conversationId,
+            senderId: apiAiMsg.senderId,
+            sender: {
+              id: apiAiMsg.senderId,
+              name: 'NovaMind AI',
+              email: 'novamind-ai@novamind.ai',
+              avatarUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=80&h=80&fit=crop',
+              status: 'online',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+            content: apiAiMsg.content,
+            type: apiAiMsg.type,
+            createdAt: apiAiMsg.createdAt,
+            updatedAt: apiAiMsg.updatedAt,
+          };
+          addMessage(roomId, aiMessage);
+        }
 
         // Refresh rooms in background so sidebar updates (e.g. last message preview)
-        useChatStore.getState().fetchRooms();
+        fetchRooms();
       } catch (err) {
-        // Fallback: add message locally if backend API fails
-        const fallbackMessage: Message = {
-          id: `msg-${Date.now()}`,
-          roomId,
-          senderId: user.id,
-          sender: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            avatarUrl: user.avatarUrl,
-            status: 'online',
-            createdAt: user.createdAt || new Date().toISOString(),
-            updatedAt: user.updatedAt || new Date().toISOString(),
-          },
-          content,
-          type: 'text',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        addMessage(roomId, fallbackMessage);
+        setTyping(roomId, 'NovaMind AI', false);
+        // If API fails, keep the optimistic message but don't add an AI reply
       }
     },
     emitTyping: (roomId: string, isTyping: boolean) => {

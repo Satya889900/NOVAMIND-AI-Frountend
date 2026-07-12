@@ -62,7 +62,7 @@ function OfflineScreen({ retry, retryCount, lastChecked }: {
         <p className="backend-offline-subtitle">
           Cannot connect to the NovaMind AI server.<br />
           Please make sure the backend is running on port&nbsp;
-          <code className="backend-offline-code">5002</code>.
+          <code className="backend-offline-code">5003</code>.
         </p>
 
         {/* Status details */}

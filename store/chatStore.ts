@@ -13,6 +13,7 @@ interface ChatActions {
   addMessage: (roomId: string, message: Message) => void;
   editMessage: (roomId: string, messageId: string, newContent: string) => Promise<void>;
   deleteMessage: (roomId: string, messageId: string) => Promise<void>;
+  removeMessageLocally: (roomId: string, messageId: string) => void;
   setTyping: (roomId: string, userName: string, isTyping: boolean) => void;
   updateUserStatus: (userId: string, status: 'online' | 'offline' | 'away') => void;
 }
@@ -274,6 +275,32 @@ export const useChatStore = create<ActiveChatState & ChatActions>((set, get) => 
     } catch (err: any) {
       set({ error: 'Failed to delete message.' });
     }
+  },
+
+  removeMessageLocally: (roomId, messageId) => {
+    set((state) => {
+      const roomMessages = (state.messages[roomId] || []).filter(
+        (m) => m.id !== messageId
+      );
+
+      const updatedRooms = state.rooms.map((r) => {
+        if (r.id === roomId) {
+          return {
+            ...r,
+            lastMessage: roomMessages.length > 0 ? roomMessages[roomMessages.length - 1] : undefined,
+          };
+        }
+        return r;
+      });
+
+      return {
+        messages: {
+          ...state.messages,
+          [roomId]: roomMessages,
+        },
+        rooms: updatedRooms,
+      };
+    });
   },
 
   setTyping: (roomId, userName, isTyping) => {

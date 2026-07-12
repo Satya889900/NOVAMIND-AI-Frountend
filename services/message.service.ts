@@ -57,6 +57,11 @@ export interface ApiResult<T> {
   meta?: Record<string, unknown>;
 }
 
+export interface SendMessageResponse {
+  userMessage: ChatMessageResponse;
+  aiReply?: ChatMessageResponse;
+}
+
 export const messageService = {
   /**
    * POST /conversations/:roomId/messages → http://localhost:5000/api/conversations/:roomId/messages
@@ -64,8 +69,8 @@ export const messageService = {
   sendChatMessage: async (
     roomId: string,
     payload: ChatMessagePayload
-  ): Promise<ApiResult<ChatMessageResponse>> => {
-    const res = await axiosClient.post<ApiResult<ChatMessageResponse>>(
+  ): Promise<ApiResult<SendMessageResponse>> => {
+    const res = await axiosClient.post<ApiResult<SendMessageResponse>>(
       API_ROUTES.MESSAGES.BY_ROOM(roomId),
       payload
     );

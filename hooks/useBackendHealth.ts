@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 export type BackendStatus = 'checking' | 'online' | 'offline';
 
-const HEALTH_URL = `${process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5002'}/api/v1/health`;
+const HEALTH_URL = `${process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5003'}/api/v1/health`;
 const POLL_INTERVAL_MS = 30_000; // re-check every 30 seconds
 const TIMEOUT_MS = 5_000;        // 5 second timeout per request
 

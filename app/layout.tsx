@@ -111,6 +111,7 @@ export default function RootLayout({
       </head>
 
       <body
+        suppressHydrationWarning
         className="
           min-h-screen
           antialiased
