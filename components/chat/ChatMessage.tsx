@@ -14,7 +14,10 @@ interface ChatMessageProps {
 export function ChatMessage({ message }: ChatMessageProps) {
   const { user } = useAuthStore();
   const { editMessage, deleteMessage } = useChatStore();
-  const isMe = message.senderId === user?.id;
+  const senderStrId = typeof message.senderId === 'object' && message.senderId
+    ? (message.senderId as any)._id || (message.senderId as any).id
+    : message.senderId;
+  const isMe = senderStrId === user?.id;
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
