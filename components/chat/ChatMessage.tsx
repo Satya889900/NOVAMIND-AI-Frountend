@@ -163,9 +163,18 @@ export function ChatMessage({ message }: ChatMessageProps) {
               }`}
             >
               {message.type === 'image' && message.fileUrl ? (
-                <div className="flex flex-col gap-2 max-w-xs">
-                  <a href={message.fileUrl} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900">
-                    <img src={message.fileUrl} alt={message.content || 'Image attachment'} className="max-w-full h-auto object-cover max-h-60 hover:scale-[1.02] transition-transform duration-200" />
+                <div className="flex flex-col gap-2">
+                  <a
+                    href={message.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-64 sm:w-80 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 shadow-sm"
+                  >
+                    <img
+                      src={message.fileUrl}
+                      alt={message.content || 'Image attachment'}
+                      className="w-full h-48 sm:h-60 object-cover hover:scale-[1.01] transition-transform duration-200"
+                    />
                   </a>
                   {message.content && message.content !== message.fileName && (
                     <p className={`mt-1 ${isMe ? 'text-white' : 'text-slate-800 dark:text-slate-100'}`}>{message.content}</p>
