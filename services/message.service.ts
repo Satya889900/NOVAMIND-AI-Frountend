@@ -36,6 +36,8 @@ export interface MessageResponse {
   senderId: string | { _id?: string; id?: string; name?: string; email?: string; avatarUrl?: string; status?: string };
   content: string;
   type: 'text' | 'image' | 'file';
+  fileUrl?: string;
+  fileName?: string;
   isEdited: boolean;
   sender: {
     id: string;

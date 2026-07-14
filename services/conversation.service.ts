@@ -34,6 +34,9 @@ export interface ConversationResponse {
     _id: string;
     content: string;
     senderId: string;
+    type?: 'text' | 'image' | 'file';
+    fileUrl?: string;
+    fileName?: string;
     createdAt: string;
   };
   createdAt: string;
