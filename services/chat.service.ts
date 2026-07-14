@@ -70,6 +70,24 @@ export const chatService = {
   },
 
   /**
+   * POST /chats/upload  →  http://localhost:5000/api/chats/upload
+   * Uploads an image or file attachment for chat messages.
+   */
+  uploadChatFile: async (
+    file: File
+  ): Promise<{ url: string; publicId: string; fileName: string; fileType: string; fileSize: number }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await axiosClient.post<{
+      success: boolean;
+      data: { url: string; publicId: string; fileName: string; fileType: string; fileSize: number };
+    }>('/chats/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data.data;
+  },
+
+  /**
    * GET /users  →  http://localhost:5000/api/users
    * Returns all users (for selecting participants).
    */

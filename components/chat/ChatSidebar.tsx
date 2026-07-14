@@ -68,7 +68,11 @@ export function ChatSidebar({ onCreateChat }: ChatSidebarProps) {
             const recipient = !room.isGroup
               ? room.participants.find((p) => p.id !== user?.id)
               : null;
-            const title = room.isGroup ? room.name : (recipient?.name || 'Direct Chat');
+            const title = room.name && room.name !== 'New Chat'
+              ? room.name
+              : room.isGroup
+                ? room.name
+                : (recipient?.name || 'Direct Chat');
             const avatarUrl = room.isGroup ? room.avatarUrl : recipient?.avatarUrl;
             const isSelected = activeRoom?.id === room.id;
             const initial = title.charAt(0).toUpperCase();

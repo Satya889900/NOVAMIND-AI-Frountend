@@ -3,7 +3,7 @@ import { Message } from '../../types/chat';
 import { useAuthStore } from '../../store/authStore';
 import { useChatStore } from '../../store/chatStore';
 import { formatTime } from '../../lib/utils';
-import { MoreVertical, Pencil, Trash2, X, Check } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, X, Check, FileText } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -162,14 +162,44 @@ export function ChatMessage({ message }: ChatMessageProps) {
                   : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-tl-none'
               }`}
             >
-              {isMe ? (
-                message.content
-              ) : (
-                <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:text-slate-50 prose-a:text-indigo-500 hover:prose-a:text-indigo-600">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {message.content}
-                  </ReactMarkdown>
+              {message.type === 'image' && message.fileUrl ? (
+                <div className="flex flex-col gap-2 max-w-xs">
+                  <a href={message.fileUrl} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900">
+                    <img src={message.fileUrl} alt={message.content || 'Image attachment'} className="max-w-full h-auto object-cover max-h-60 hover:scale-[1.02] transition-transform duration-200" />
+                  </a>
+                  {message.content && message.content !== message.fileName && (
+                    <p className={`mt-1 ${isMe ? 'text-white' : 'text-slate-800 dark:text-slate-100'}`}>{message.content}</p>
+                  )}
                 </div>
+              ) : message.type === 'file' && message.fileUrl ? (
+                <div className="flex items-center gap-3 p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 max-w-xs">
+                  <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50 shrink-0">
+                    <FileText size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold truncate text-slate-800 dark:text-slate-200">
+                      {message.fileName || 'Attachment'}
+                    </p>
+                    <a
+                      href={message.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold hover:underline mt-0.5 block"
+                    >
+                      Download File
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                isMe ? (
+                  message.content
+                ) : (
+                  <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:text-slate-50 prose-a:text-indigo-500 hover:prose-a:text-indigo-600">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
+                )
               )}
             </div>
           )}

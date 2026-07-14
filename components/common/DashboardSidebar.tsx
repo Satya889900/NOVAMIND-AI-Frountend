@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MessageSquare, User, Settings, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
+import { MessageSquare, User, Settings, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import { useUiStore } from '../../store/uiStore';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -18,6 +18,12 @@ export function DashboardSidebar() {
       href: '/chat',
       icon: MessageSquare,
       description: 'Active conversations',
+    },
+    {
+      name: 'Documents',
+      href: '/documents',
+      icon: FileText,
+      description: 'Uploaded files',
     },
     {
       name: 'My Profile',

@@ -16,6 +16,8 @@ interface ChatActions {
   removeMessageLocally: (roomId: string, messageId: string) => void;
   setTyping: (roomId: string, userName: string, isTyping: boolean) => void;
   updateUserStatus: (userId: string, status: 'online' | 'offline' | 'away') => void;
+  renameRoom: (roomId: string, name: string) => Promise<void>;
+  deleteRoom: (roomId: string) => Promise<void>;
 }
 
 export const useChatStore = create<ActiveChatState & ChatActions>((set, get) => ({
@@ -348,5 +350,41 @@ export const useChatStore = create<ActiveChatState & ChatActions>((set, get) => 
         activeRoom: updatedActiveRoom,
       };
     });
+  },
+
+  renameRoom: async (roomId, name) => {
+    try {
+      await conversationService.renameConversation(roomId, name);
+      set((state) => ({
+        rooms: state.rooms.map((r) => (r.id === roomId ? { ...r, name } : r)),
+        activeRoom: state.activeRoom?.id === roomId ? { ...state.activeRoom, name } : state.activeRoom,
+      }));
+    } catch (err) {
+      set({ error: 'Failed to rename conversation.' });
+      throw err;
+    }
+  },
+
+  deleteRoom: async (roomId) => {
+    try {
+      await conversationService.deleteConversation(roomId);
+      set((state) => {
+        const nextActiveRoom = state.activeRoom?.id === roomId ? null : state.activeRoom;
+        const newRooms = state.rooms.filter((r) => r.id !== roomId);
+        
+        // Remove messages cache for this room
+        const newMessages = { ...state.messages };
+        delete newMessages[roomId];
+
+        return {
+          rooms: newRooms,
+          activeRoom: nextActiveRoom,
+          messages: newMessages,
+        };
+      });
+    } catch (err) {
+      set({ error: 'Failed to delete conversation.' });
+      throw err;
+    }
   },
 }));

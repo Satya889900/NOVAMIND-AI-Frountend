@@ -81,10 +81,10 @@ export const conversationService = {
   },
 
   /**
-   * PUT /conversations/:id → http://localhost:5000/api/conversations/:id
+   * PATCH /conversations/:id → http://localhost:5000/api/conversations/:id
    */
   renameConversation: async (id: string, name: string): Promise<ApiResult<ConversationResponse>> => {
-    const res = await axiosClient.put<ApiResult<ConversationResponse>>(
+    const res = await axiosClient.patch<ApiResult<ConversationResponse>>(
       API_ROUTES.CONVERSATIONS.BY_ID(id),
       { name }
     );

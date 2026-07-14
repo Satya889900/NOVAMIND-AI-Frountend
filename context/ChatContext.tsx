@@ -11,7 +11,13 @@ import { Message } from '../types/chat';
 interface ChatContextType {
   joinRoom: (roomId: string) => void;
   leaveRoom: (roomId: string) => void;
-  sendMessage: (roomId: string, content: string) => void;
+  sendMessage: (
+    roomId: string,
+    content: string,
+    type?: 'text' | 'image' | 'file',
+    fileUrl?: string,
+    fileName?: string
+  ) => void;
   emitTyping: (roomId: string, isTyping: boolean) => void;
 }
 
@@ -88,13 +94,19 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         socketService.leaveRoom(roomId);
       } catch (e) {}
     },
-    sendMessage: async (roomId: string, content: string) => {
+    sendMessage: async (
+      roomId: string,
+      content: string,
+      type?: 'text' | 'image' | 'file',
+      fileUrl?: string,
+      fileName?: string
+    ) => {
       const user = useAuthStore.getState().user;
       if (!user) return;
 
       // 1. Try sending via socket (real-time broadcast to other users)
       try {
-        socketService.sendMessage(roomId, content);
+        socketService.sendMessage(roomId, content, type || 'text');
       } catch (e) {}
 
       // --- OPTIMISTIC UI: Show the message instantly ---
@@ -113,7 +125,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           updatedAt: user.updatedAt || new Date().toISOString(),
         },
         content,
-        type: 'text',
+        type: type || 'text',
+        fileUrl,
+        fileName,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -130,7 +144,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       try {
         const result = await messageService.sendChatMessage(roomId, {
           content,
-          type: 'text',
+          type: type || 'text',
+          fileUrl,
+          fileName,
         });
 
         // Turn off AI typing indicator
@@ -157,6 +173,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           },
           content: apiUserMsg.content,
           type: apiUserMsg.type,
+          fileUrl: apiUserMsg.fileUrl,
+          fileName: apiUserMsg.fileName,
           createdAt: apiUserMsg.createdAt,
           updatedAt: apiUserMsg.updatedAt,
         };
@@ -181,6 +199,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             },
             content: apiAiMsg.content,
             type: apiAiMsg.type,
+            fileUrl: apiAiMsg.fileUrl,
+            fileName: apiAiMsg.fileName,
             createdAt: apiAiMsg.createdAt,
             updatedAt: apiAiMsg.updatedAt,
           };
