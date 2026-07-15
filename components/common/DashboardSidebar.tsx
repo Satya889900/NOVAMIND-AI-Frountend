@@ -71,10 +71,10 @@ export function DashboardSidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 p-3 rounded-xl transition-all group ${
+                className={`flex items-center gap-3 py-3 pr-3 rounded-r-xl transition-all border-l-4 group ${
                   isActive
-                    ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold'
-                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-950 dark:hover:text-slate-50'
+                    ? 'bg-gradient-to-r from-indigo-50 to-indigo-100/40 dark:from-indigo-950/30 dark:to-indigo-900/10 border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400 font-bold pl-2'
+                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-950 dark:hover:text-slate-50 pl-2'
                 }`}
               >
                 <Icon

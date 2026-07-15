@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useChatStore } from '../../../store/chatStore';
 import { documentService } from '../../../services/document.service';
 import { Document } from '../../../types/document';
 import {
@@ -14,6 +16,7 @@ import {
   Loader2,
   File,
   X,
+  MessageSquare,
 } from 'lucide-react';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -94,6 +97,9 @@ function validateFile(file: File): string | null {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function DocumentsPage() {
+  const router = useRouter();
+  const { rooms, createRoom, selectRoom } = useChatStore();
+
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
@@ -102,6 +108,30 @@ export default function DocumentsPage() {
   const [globalError, setGlobalError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
+
+  const handleChatWithDocument = async (doc: Document) => {
+    try {
+      // Find if we already have a room with this documentId
+      const existingRoom = rooms.find((r) => r.documentId === doc._id);
+      if (existingRoom) {
+        selectRoom(existingRoom);
+        router.push('/chat');
+        return;
+      }
+
+      // Create new room with documentId
+      const room = await createRoom({
+        name: `Chat: ${doc.originalName}`,
+        isGroup: false,
+        documentId: doc._id,
+        participantIds: [], // backend adds user and AI bot automatically
+      });
+      selectRoom(room);
+      router.push('/chat');
+    } catch (err) {
+      setGlobalError('Failed to start chat with document.');
+    }
+  };
 
   // Load documents on mount
   useEffect(() => {
@@ -243,7 +273,7 @@ export default function DocumentsPage() {
             Document Library
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Upload PDF, DOCX, or TXT files. The AI will learn from them in a future update.
+            Upload PDF, DOCX, or TXT files and chat with them using AI-powered Retrieval-Augmented Generation (RAG).
           </p>
         </div>
 
@@ -393,7 +423,8 @@ export default function DocumentsPage() {
                 return (
                   <div
                     key={doc._id}
-                    className="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-slate-300 dark:hover:border-slate-700 transition-colors group"
+                    onClick={() => doc.storagePath && window.open(doc.storagePath, '_blank')}
+                    className="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-slate-300 dark:hover:border-slate-700 transition-colors group cursor-pointer"
                   >
                     {/* File Icon */}
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${bg}`}>
@@ -426,9 +457,26 @@ export default function DocumentsPage() {
                       {badge.label}
                     </span>
 
+                    {/* Chat with Document Button */}
+                    {doc.status === 'Ready' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleChatWithDocument(doc);
+                        }}
+                        className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                        title="Chat with Document (RAG)"
+                      >
+                        <MessageSquare size={14} />
+                      </button>
+                    )}
+
                     {/* Delete Button */}
                     <button
-                      onClick={() => handleDelete(doc._id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(doc._id);
+                      }}
                       disabled={deletingId === doc._id}
                       className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100 cursor-pointer disabled:opacity-50"
                       title="Delete document"
@@ -452,9 +500,9 @@ export default function DocumentsPage() {
             i
           </div>
           <div>
-            <p className="text-xs font-bold text-indigo-700 dark:text-indigo-400">RAG coming soon</p>
+            <p className="text-xs font-bold text-indigo-700 dark:text-indigo-400">Document RAG is Active!</p>
             <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70 mt-0.5">
-              Your documents are being stored and chunked. In the next phase, the AI will answer questions directly from these files.
+              Your documents are chunked and embedded. Click the chat icon on any "Ready" document to start a conversation and ask questions about its content.
             </p>
           </div>
         </div>

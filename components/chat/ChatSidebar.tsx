@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useChat } from '../../hooks/useChat';
 import { useAuthStore } from '../../store/authStore';
 import { Room } from '../../types/chat';
-import { Search, Plus, MessageSquare, Hash } from 'lucide-react';
+import { Search, Plus, MessageSquare, Hash, FileText } from 'lucide-react';
 import { formatTime } from '../../lib/utils';
 
 interface ChatSidebarProps {
@@ -81,14 +81,18 @@ export function ChatSidebar({ onCreateChat }: ChatSidebarProps) {
               <button
                 key={room.id}
                 onClick={() => selectRoom(room)}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left cursor-pointer ${
+                className={`w-full flex items-center gap-3 py-3 pr-3 rounded-r-xl transition-all text-left cursor-pointer border-l-4 ${
                   isSelected
-                    ? 'bg-indigo-50 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-200'
-                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300'
+                    ? 'bg-gradient-to-r from-indigo-50/70 to-indigo-100/10 dark:from-indigo-950/20 dark:to-transparent border-indigo-600 dark:border-indigo-400 text-indigo-900 dark:text-indigo-200 font-semibold pl-2 shadow-sm/5'
+                    : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300 pl-2'
                 }`}
               >
                 {/* Avatar */}
-                {room.isGroup ? (
+                {room.documentId ? (
+                  <div className="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-100 dark:border-indigo-900/40">
+                    <FileText size={18} />
+                  </div>
+                ) : room.isGroup ? (
                   avatarUrl ? (
                     <img
                       src={avatarUrl}

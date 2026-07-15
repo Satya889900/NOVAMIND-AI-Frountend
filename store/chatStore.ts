@@ -7,7 +7,7 @@ import { useAuthStore } from './authStore';
 
 interface ChatActions {
   fetchRooms: () => Promise<void>;
-  createRoom: (data: { name?: string; isGroup?: boolean; participantIds?: string[] }) => Promise<Room>;
+  createRoom: (data: { name?: string; isGroup?: boolean; participantIds?: string[]; documentId?: string }) => Promise<Room>;
   selectRoom: (room: Room | null) => void;
   fetchMessages: (roomId: string) => Promise<void>;
   addMessage: (roomId: string, message: Message) => void;
@@ -37,6 +37,7 @@ export const useChatStore = create<ActiveChatState & ChatActions>((set, get) => 
         name: conv.name,
         isGroup: conv.isGroup,
         avatarUrl: conv.avatarUrl || undefined,
+        documentId: conv.documentId,
         participants: conv.participants.map((p) => ({
           id: p._id,
           name: p.name,
@@ -84,6 +85,7 @@ export const useChatStore = create<ActiveChatState & ChatActions>((set, get) => 
         name: data.name,
         isGroup: data.isGroup,
         participantIds: data.participantIds,
+        documentId: data.documentId,
       });
 
       const conv = result.data;
@@ -92,6 +94,7 @@ export const useChatStore = create<ActiveChatState & ChatActions>((set, get) => 
         name: conv.name,
         isGroup: conv.isGroup,
         avatarUrl: conv.avatarUrl || undefined,
+        documentId: conv.documentId,
         participants: conv.participants.map((p) => ({
           id: p._id,
           name: p.name,

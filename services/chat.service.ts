@@ -61,10 +61,19 @@ export const chatService = {
   /**
    * POST /conversations/:roomId/messages  →  http://localhost:5000/api/conversations/:roomId/messages
    */
-  sendMessage: async (roomId: string, content: string, type?: string): Promise<Message> => {
+  sendMessage: async (
+    roomId: string,
+    content: string,
+    type?: string,
+    model?: string
+  ): Promise<Message> => {
+    const payload: any = { content, type: type || 'text' };
+    if (model) {
+      payload.model = model;
+    }
     const res = await axiosClient.post<{ success: boolean; data: Message }>(
       API_ROUTES.MESSAGES.BY_ROOM(roomId),
-      { content, type: type || 'text' }
+      payload
     );
     return res.data.data;
   },

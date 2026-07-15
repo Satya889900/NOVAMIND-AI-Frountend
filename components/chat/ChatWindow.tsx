@@ -47,7 +47,7 @@ export function ChatWindow({ room }: ChatWindowProps) {
       <TypingIndicator typingUsers={roomTyping} />
 
       <ChatInput
-        onSendMessage={(content, type, fileUrl, fileName) => sendMessage(room.id, content, type, fileUrl, fileName)}
+        onSendMessage={(content, type, fileUrl, fileName, model) => sendMessage(room.id, content, type, fileUrl, fileName, model)}
         onTyping={(isTyping) => emitTyping(room.id, isTyping)}
       />
     </div>

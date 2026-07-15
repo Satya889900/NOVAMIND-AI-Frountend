@@ -1,15 +1,17 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Image, Paperclip, Loader2, FileText, X } from 'lucide-react';
+import { Send, Image, Paperclip, Loader2, FileText, X, ChevronDown, Sparkles, Zap, Bot } from 'lucide-react';
 import { chatService } from '../../services/chat.service';
+import { settingsService, ProviderStatus } from '../../services/settings.service';
 
 interface ChatInputProps {
   onSendMessage: (
     content: string,
     type?: 'text' | 'image' | 'file',
     fileUrl?: string,
-    fileName?: string
+    fileName?: string,
+    model?: string
   ) => void;
   onTyping: (isTyping: boolean) => void;
 }
@@ -22,14 +24,109 @@ interface AttachedFile {
   fileSize: number;
 }
 
+interface ModelItem {
+  id: string;
+  name: string;
+  badge: string;
+  description: string;
+  providerId: string;
+  providerName: string;
+  configured: boolean;
+}
+
+// Map provider ids to icons & colors
+const PROVIDER_STYLE: Record<string, { icon: React.ReactNode; gradient: string; badgeColor: string }> = {
+  gemini: {
+    icon: <Sparkles size={14} />,
+    gradient: 'from-blue-500 to-violet-500',
+    badgeColor: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  },
+  groq: {
+    icon: <Zap size={14} />,
+    gradient: 'from-orange-500 to-red-500',
+    badgeColor: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
+  },
+  huggingface: {
+    icon: <Bot size={14} />,
+    gradient: 'from-yellow-500 to-amber-500',
+    badgeColor: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
+  },
+  blackforest: {
+    icon: <Image size={14} />,
+    gradient: 'from-amber-500 to-orange-500',
+    badgeColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  },
+};
+
+const DEFAULT_STYLE = {
+  icon: <Bot size={14} />,
+  gradient: 'from-slate-500 to-slate-600',
+  badgeColor: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
+};
+
 export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
   const [content, setContent] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
 
+  // Model selector state
+  const [models, setModels] = useState<ModelItem[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [defaultModel, setDefaultModel] = useState<string>('');
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
+
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch available models on mount
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const [providers, settings] = await Promise.all([
+          settingsService.getProviders(),
+          settingsService.getSettings(),
+        ]);
+
+        const allModels: ModelItem[] = [];
+        providers.forEach((provider: ProviderStatus) => {
+          provider.models.forEach((m) => {
+            allModels.push({
+              id: m.id,
+              name: m.name,
+              badge: m.badge,
+              description: m.description,
+              providerId: provider.id,
+              providerName: provider.name,
+              configured: provider.configured,
+            });
+          });
+        });
+
+        setModels(allModels);
+        setDefaultModel(settings.defaultModel);
+        setSelectedModel(settings.defaultModel);
+      } catch (err) {
+        console.error('Failed to load AI models:', err);
+      }
+    };
+
+    fetchModels();
+  }, []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowModelDropdown(false);
+      }
+    };
+    if (showModelDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showModelDropdown]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -92,11 +189,15 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
         : 'file'
       : 'text';
 
+    // Always send the selected model
+    const modelOverride = selectedModel || undefined;
+
     onSendMessage(
       msgContent,
       msgType,
       attachedFile?.url,
-      attachedFile?.fileName
+      attachedFile?.fileName,
+      modelOverride
     );
 
     setContent('');
@@ -115,6 +216,11 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
       }
     };
   }, []);
+
+  const currentModel = models.find((m) => m.id === selectedModel);
+  const currentStyle = currentModel
+    ? PROVIDER_STYLE[currentModel.providerId] || DEFAULT_STYLE
+    : DEFAULT_STYLE;
 
   return (
     <div className="flex flex-col border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
@@ -186,6 +292,7 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
       />
 
       <form onSubmit={handleSend} className="p-4 flex items-center gap-3">
+        {/* Left side: attachment buttons + model selector */}
         <div className="flex items-center gap-1 text-slate-400">
           <button
             type="button"
@@ -205,6 +312,103 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
           >
             <Paperclip size={20} />
           </button>
+
+          {/* ═══════════════════ MODEL SELECTOR ═══════════════════ */}
+          <div ref={dropdownRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setShowModelDropdown(!showModelDropdown)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
+                showModelDropdown
+                  ? 'bg-indigo-50 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
+                  : 'hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+              }`}
+              title="Switch AI Model"
+            >
+              <span className={`flex items-center justify-center w-4 h-4 bg-gradient-to-br ${currentStyle.gradient} text-white rounded-sm`}>
+                {currentStyle.icon}
+              </span>
+              <span className="hidden sm:inline max-w-[100px] truncate">
+                {currentModel?.name || 'Model'}
+              </span>
+              <ChevronDown
+                size={12}
+                className={`transition-transform duration-200 ${showModelDropdown ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {/* ── Dropdown Panel ── */}
+            {showModelDropdown && (
+              <div className="absolute bottom-full left-0 mb-2 w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl shadow-slate-200/50 dark:shadow-black/30 z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-150">
+                {/* Header */}
+                <div className="px-3 py-2.5 border-b border-slate-100 dark:border-slate-700/50">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    Select AI Model
+                  </p>
+                </div>
+
+                {/* Model List */}
+                <div className="max-h-[240px] overflow-y-auto py-1.5">
+                  {models.map((model) => {
+                    const style = PROVIDER_STYLE[model.providerId] || DEFAULT_STYLE;
+                    const isSelected = model.id === selectedModel;
+                    const isDisabled = !model.configured;
+
+                    return (
+                      <button
+                        key={model.id}
+                        type="button"
+                        disabled={isDisabled}
+                        onClick={() => {
+                          setSelectedModel(model.id);
+                          setShowModelDropdown(false);
+                        }}
+                        className={`w-full flex items-start gap-3 px-3 py-2.5 text-left transition-all cursor-pointer ${
+                          isDisabled
+                            ? 'opacity-40 cursor-not-allowed'
+                            : isSelected
+                            ? 'bg-indigo-50/60 dark:bg-indigo-950/20'
+                            : 'hover:bg-slate-50 dark:hover:bg-slate-700/40'
+                        }`}
+                        title={isDisabled ? `Set ${model.providerId.toUpperCase()}_API_KEY in .env to enable` : model.description}
+                      >
+                        {/* Provider icon */}
+                        <div className={`mt-0.5 flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br ${style.gradient} text-white shrink-0 shadow-sm`}>
+                          {style.icon}
+                        </div>
+
+                        {/* Model info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm font-semibold ${
+                              isSelected
+                                ? 'text-indigo-700 dark:text-indigo-300'
+                                : 'text-slate-800 dark:text-slate-100'
+                            }`}>
+                              {model.name}
+                            </span>
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${style.badgeColor}`}>
+                              {model.badge}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight">
+                            {isDisabled
+                              ? `Requires ${model.providerId.toUpperCase()}_API_KEY`
+                              : model.providerName}
+                          </p>
+                        </div>
+
+                        {/* Selected indicator */}
+                        {isSelected && (
+                          <div className="mt-1 w-2 h-2 rounded-full bg-indigo-500 shrink-0 animate-pulse" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <input
@@ -212,13 +416,13 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
           value={content}
           onChange={handleInputChange}
           placeholder={attachedFile ? "Add a message..." : "Type a message..."}
-          className="flex-1 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+          className="flex-1 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-inner/5"
         />
 
         <button
           type="submit"
           disabled={!content.trim() && !attachedFile}
-          className="p-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:bg-indigo-600 text-white rounded-xl shadow-md shadow-indigo-500/10 transition-all cursor-pointer flex items-center justify-center"
+          className="p-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:opacity-95 disabled:opacity-50 disabled:from-indigo-600 disabled:to-indigo-600 text-white rounded-xl shadow-md shadow-indigo-500/15 transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95"
         >
           <Send size={18} />
         </button>

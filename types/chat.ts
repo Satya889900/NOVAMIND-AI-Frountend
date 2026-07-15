@@ -9,6 +9,7 @@ export interface Message {
   type: 'text' | 'image' | 'file';
   fileUrl?: string;
   fileName?: string;
+  model?: string;
   isEdited?: boolean;
   createdAt: string;
   updatedAt: string;
@@ -22,6 +23,7 @@ export interface Room {
   participants: User[];
   lastMessage?: Message;
   unreadCount?: number;
+  documentId?: string;
   createdAt: string;
   updatedAt: string;
 }

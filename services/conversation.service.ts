@@ -14,6 +14,7 @@ export interface CreateConversationPayload {
   name?: string;
   isGroup?: boolean;
   participantIds?: string[];
+  documentId?: string;
 }
 
 export interface ConversationParticipant {
@@ -30,6 +31,7 @@ export interface ConversationResponse {
   isGroup: boolean;
   avatarUrl: string;
   participants: ConversationParticipant[];
+  documentId?: string;
   lastMessage?: {
     _id: string;
     content: string;

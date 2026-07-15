@@ -14,6 +14,7 @@ export interface ChatMessagePayload {
   type?: 'text' | 'image' | 'file';
   fileUrl?: string;
   fileName?: string;
+  model?: string;
 }
 
 export interface ChatMessageResponse {
@@ -24,6 +25,7 @@ export interface ChatMessageResponse {
   type: 'text' | 'image' | 'file';
   fileUrl?: string;
   fileName?: string;
+  model?: string;
   createdAt: string;
   updatedAt: string;
 }

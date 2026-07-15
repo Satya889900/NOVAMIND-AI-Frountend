@@ -16,7 +16,8 @@ interface ChatContextType {
     content: string,
     type?: 'text' | 'image' | 'file',
     fileUrl?: string,
-    fileName?: string
+    fileName?: string,
+    model?: string
   ) => void;
   emitTyping: (roomId: string, isTyping: boolean) => void;
 }
@@ -99,7 +100,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       content: string,
       type?: 'text' | 'image' | 'file',
       fileUrl?: string,
-      fileName?: string
+      fileName?: string,
+      model?: string
     ) => {
       const user = useAuthStore.getState().user;
       if (!user) return;
@@ -147,6 +149,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           type: type || 'text',
           fileUrl,
           fileName,
+          model,
         });
 
         // Turn off AI typing indicator
@@ -199,6 +202,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             },
             content: apiAiMsg.content,
             type: apiAiMsg.type,
+            model: apiAiMsg.model,
             fileUrl: apiAiMsg.fileUrl,
             fileName: apiAiMsg.fileName,
             createdAt: apiAiMsg.createdAt,

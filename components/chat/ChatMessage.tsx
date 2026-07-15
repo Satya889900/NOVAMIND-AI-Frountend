@@ -3,13 +3,24 @@ import { Message } from '../../types/chat';
 import { useAuthStore } from '../../store/authStore';
 import { useChatStore } from '../../store/chatStore';
 import { formatTime } from '../../lib/utils';
-import { MoreVertical, Pencil, Trash2, X, Check, FileText } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, X, Check, FileText, Sparkles, Zap, Bot, Image as ImageIcon } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 interface ChatMessageProps {
   message: Message;
 }
+
+// Friendly display names and styles for AI models
+const MODEL_DISPLAY: Record<string, { label: string; bg: string; border: string; text: string; icon: 'sparkles' | 'zap' | 'bot' | 'image' }> = {
+  'gemini-3.1-flash-lite': { label: 'Gemini 2.5 Flash', bg: 'bg-blue-50 dark:bg-blue-950/20', border: 'border-blue-200/50 dark:border-blue-800/30', text: 'text-blue-600 dark:text-blue-400', icon: 'sparkles' },
+  'gemini-3.5-flash':      { label: 'Gemini 2.5 Pro',   bg: 'bg-violet-50 dark:bg-violet-950/20', border: 'border-violet-200/50 dark:border-violet-800/30', text: 'text-violet-600 dark:text-violet-400', icon: 'sparkles' },
+  'llama-3.3-70b-versatile': { label: 'Llama 3.3 · 70B', bg: 'bg-orange-50 dark:bg-orange-950/20', border: 'border-orange-200/50 dark:border-orange-800/30', text: 'text-orange-600 dark:text-orange-400', icon: 'zap' },
+  'Qwen/Qwen2.5-7B-Instruct': { label: 'Qwen 2.5 · 7B', bg: 'bg-emerald-50 dark:bg-emerald-950/20', border: 'border-emerald-200/50 dark:border-emerald-800/30', text: 'text-emerald-600 dark:text-emerald-400', icon: 'bot' },
+  'deepseek-ai/DeepSeek-R1': { label: 'DeepSeek R1', bg: 'bg-green-50 dark:bg-green-950/20', border: 'border-green-200/50 dark:border-green-800/30', text: 'text-green-600 dark:text-green-400', icon: 'bot' },
+  'deepseek-ai/DeepSeek-V3': { label: 'DeepSeek V3', bg: 'bg-teal-50 dark:bg-teal-950/20', border: 'border-teal-200/50 dark:border-teal-800/30', text: 'text-teal-600 dark:text-teal-400', icon: 'bot' },
+  'flux-schnell': { label: 'FLUX.1 Schnell', bg: 'bg-amber-50 dark:bg-amber-950/20', border: 'border-amber-200/50 dark:border-amber-800/30', text: 'text-amber-600 dark:text-amber-400', icon: 'image' },
+};
 
 export function ChatMessage({ message }: ChatMessageProps) {
   const { user } = useAuthStore();
@@ -156,28 +167,28 @@ export function ChatMessage({ message }: ChatMessageProps) {
             </div>
           ) : (
             <div
-              className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
+              className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                 isMe
-                  ? 'bg-indigo-600 text-white rounded-tr-none'
-                  : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-tl-none'
+                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-500 dark:to-violet-500 text-white rounded-tr-none shadow-md shadow-indigo-500/10'
+                  : 'bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-none shadow-sm'
               }`}
             >
               {message.type === 'image' && message.fileUrl ? (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-3 py-1">
                   <a
                     href={message.fileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block w-64 sm:w-80 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 shadow-sm"
+                    className="block max-w-sm w-full aspect-square overflow-hidden rounded-xl border border-slate-200/60 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-md transition-all duration-300 hover:shadow-lg hover:shadow-slate-500/5 group/img"
                   >
                     <img
                       src={message.fileUrl}
                       alt={message.content || 'Image attachment'}
-                      className="w-full h-48 sm:h-60 object-cover hover:scale-[1.01] transition-transform duration-200"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-[1.02]"
                     />
                   </a>
                   {message.content && message.content !== message.fileName && (
-                    <p className={`mt-1 ${isMe ? 'text-white' : 'text-slate-800 dark:text-slate-100'}`}>{message.content}</p>
+                    <p className={`mt-1 font-medium leading-relaxed ${isMe ? 'text-white' : 'text-slate-800 dark:text-slate-200'}`}>{message.content}</p>
                   )}
                 </div>
               ) : message.type === 'file' && message.fileUrl ? (
@@ -223,6 +234,18 @@ export function ChatMessage({ message }: ChatMessageProps) {
               (edited)
             </span>
           )}
+          {/* AI Model Badge */}
+          {!isMe && message.model && (() => {
+            const display = MODEL_DISPLAY[message.model];
+            if (!display) return null;
+            const IconComponent = display.icon === 'zap' ? Zap : display.icon === 'bot' ? Bot : display.icon === 'image' ? ImageIcon : Sparkles;
+            return (
+              <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full border shadow-sm/5 leading-none transition-all ${display.bg} ${display.border} ${display.text}`}>
+                <IconComponent size={9} />
+                {display.label}
+              </span>
+            );
+          })()}
         </div>
       </div>
     </div>
