@@ -5,15 +5,28 @@ import Link from 'next/link';
 import { useAuth } from '../../hooks/useAuth';
 import { Logo } from './Logo';
 import { ThemeToggle } from './ThemeToggle';
-import { LogOut, User as UserIcon } from 'lucide-react';
+import { LogOut, User as UserIcon, Menu } from 'lucide-react';
+import { useUiStore } from '../../store/uiStore';
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
+  const { toggleSidebar } = useUiStore();
 
   return (
     <nav className="w-full border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md sticky top-0 z-30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <Logo />
+        <div className="flex items-center gap-2">
+          {isAuthenticated && (
+            <button
+              onClick={toggleSidebar}
+              className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 rounded-lg transition-colors cursor-pointer lg:hidden flex items-center justify-center shrink-0"
+              title="Toggle Navigation Menu"
+            >
+              <Menu size={20} />
+            </button>
+          )}
+          <Logo />
+        </div>
 
         <div className="flex items-center gap-4">
           <ThemeToggle />

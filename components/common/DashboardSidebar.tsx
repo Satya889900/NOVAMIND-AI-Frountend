@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MessageSquare, User, Settings, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
@@ -9,8 +9,15 @@ import { useAuth } from '../../hooks/useAuth';
 
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const { sidebarOpen, toggleSidebar } = useUiStore();
+  const { sidebarOpen, toggleSidebar, setSidebarOpen } = useUiStore();
   const { user } = useAuth();
+
+  // Collapse sidebar on small screens initially and on page navigation
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
+  }, [pathname, setSidebarOpen]);
 
   const navItems = [
     {
@@ -40,11 +47,22 @@ export function DashboardSidebar() {
   ];
 
   return (
-    <aside
-      className={`border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all duration-300 flex flex-col justify-between shrink-0 h-[calc(100vh-4rem)] relative select-none ${
-        sidebarOpen ? 'w-64' : 'w-20'
-      }`}
-    >
+    <>
+      {/* Mobile backdrop overlay */}
+      {sidebarOpen && (
+        <div
+          onClick={toggleSidebar}
+          className="fixed inset-0 top-16 bg-slate-950/20 backdrop-blur-sm z-30 lg:hidden cursor-pointer"
+        />
+      )}
+
+      <aside
+        className={`border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all duration-300 flex flex-col justify-between shrink-0 h-[calc(100vh-4rem)] select-none z-40 fixed lg:sticky top-16 left-0 ${
+          sidebarOpen
+            ? 'w-64 translate-x-0 shadow-2xl lg:shadow-none'
+            : 'w-0 lg:w-20 -translate-x-full lg:translate-x-0 overflow-hidden border-r-0 lg:border-r'
+        }`}
+      >
       {/* Navigation List */}
       <div className="flex-1 py-6 px-4 flex flex-col gap-6">
         <div className={`flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
@@ -124,5 +142,6 @@ export function DashboardSidebar() {
         </div>
       )}
     </aside>
+  </>
   );
 }

@@ -27,14 +27,21 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex-1 flex overflow-hidden h-[calc(100vh-4rem)] relative">
-      <ChatSidebar onCreateChat={handleCreateNewChat} />
+    <div className="flex-1 flex overflow-hidden h-[calc(100vh-4rem)] relative w-full">
+      {/* Conversations list sidebar */}
+      <div className={`shrink-0 h-full ${activeRoom ? 'chat-sidebar-responsive-hidden chat-sidebar-responsive-visible' : 'w-full lg:w-80 flex flex-col'}`}>
+        <ChatSidebar onCreateChat={handleCreateNewChat} />
+      </div>
 
-      {activeRoom ? (
-        <ChatWindow room={activeRoom} />
-      ) : (
-        <EmptyState onCreateChat={handleCreateNewChat} />
-      )}
+      {/* Active chat window or empty state container */}
+      <div className={`h-full flex flex-col ${activeRoom ? 'chat-window-responsive-full chat-window-responsive-desktop' : 'max-lg:hidden lg:flex flex-1'}`}>
+
+        {activeRoom ? (
+          <ChatWindow room={activeRoom} />
+        ) : (
+          <EmptyState onCreateChat={handleCreateNewChat} />
+        )}
+      </div>
     </div>
   );
 }

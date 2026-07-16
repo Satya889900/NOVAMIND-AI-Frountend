@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Room } from '../../types/chat';
 import { useAuthStore } from '../../store/authStore';
 import { useChat } from '../../hooks/useChat';
-import { Users, MoreVertical, Hash, Edit2, Trash2, Check, X } from 'lucide-react';
+import { Users, MoreVertical, Hash, Edit2, Trash2, Check, X, ArrowLeft } from 'lucide-react';
 
 interface ChatHeaderProps {
   room: Room;
@@ -10,7 +10,7 @@ interface ChatHeaderProps {
 
 export function ChatHeader({ room }: ChatHeaderProps) {
   const { user } = useAuthStore();
-  const { renameRoom, deleteRoom } = useChat();
+  const { renameRoom, deleteRoom, selectRoom } = useChat();
 
   const [isEditing, setIsEditing] = useState(false);
   const [newName, setNewName] = useState(room.name || '');
@@ -63,8 +63,17 @@ export function ChatHeader({ room }: ChatHeaderProps) {
   };
 
   return (
-    <div className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 flex items-center justify-between shrink-0 relative">
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+    <div className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 sm:px-6 flex items-center justify-between shrink-0 relative">
+      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+        {/* Back button on mobile */}
+        <button
+          onClick={() => selectRoom(null)}
+          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 rounded-lg transition-colors cursor-pointer lg:hidden flex items-center justify-center shrink-0"
+          title="Back to conversations"
+        >
+          <ArrowLeft size={20} />
+        </button>
+
         {room.isGroup ? (
           avatarUrl ? (
             <img

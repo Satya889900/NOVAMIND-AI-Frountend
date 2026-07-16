@@ -26,6 +26,7 @@ export const API_ROUTES = {
     BASE: '/documents',
     UPLOAD: '/documents/upload',
     BY_ID: (id: string) => `/documents/${id}`,
+    STAR: (id: string) => `/documents/${id}/star`,
   },
 };
 

@@ -47,3 +47,26 @@
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
   }
 }
+
+/* ═══════════════════ RESPONSIVE CHAT LAYOUT OVERRIDES ═══════════════════ */
+@media (max-width: 1023px) {
+  .chat-sidebar-responsive-hidden {
+    display: none !important;
+  }
+  .chat-window-responsive-full {
+    display: flex !important;
+    flex: 1 !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .chat-sidebar-responsive-visible {
+    display: flex !important;
+    width: 20rem !important; /* w-80 */
+  }
+  .chat-window-responsive-desktop {
+    display: flex !important;
+    flex: 1 !important;
+  }
+}
+

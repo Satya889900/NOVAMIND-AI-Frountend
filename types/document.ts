@@ -11,6 +11,7 @@ export interface Document {
   storagePath: string;
   cloudinaryPublicId: string;
   status: DocumentStatus;
+  isStarred: boolean;
   createdAt: string;
   updatedAt: string;
 }

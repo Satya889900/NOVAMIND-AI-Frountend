@@ -223,12 +223,12 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
     : DEFAULT_STYLE;
 
   return (
-    <div className="flex flex-col border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+    <div className="flex flex-col border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 relative w-full">
       {/* Attached File Preview */}
       {attachedFile && (
-        <div className="px-4 py-2 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 animate-in slide-in-from-bottom-2 duration-150 relative">
+        <div className="px-3 sm:px-4 py-2 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 animate-in slide-in-from-bottom-2 duration-150 relative">
           {attachedFile.fileType.startsWith('image/') ? (
-            <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shrink-0">
+            <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shrink-0">
               <img
                 src={attachedFile.url}
                 alt="Upload preview"
@@ -236,7 +236,7 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
               />
             </div>
           ) : (
-            <div className="w-12 h-12 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50 shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50 shrink-0">
               <FileText size={18} />
             </div>
           )}
@@ -251,7 +251,7 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
           <button
             type="button"
             onClick={clearAttachment}
-            className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer transition-colors"
+            className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer transition-colors shrink-0"
           >
             <X size={16} />
           </button>
@@ -260,7 +260,7 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
 
       {/* Uploading State indicator */}
       {isUploading && (
-        <div className="px-4 py-2 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 animate-in slide-in-from-bottom-2 duration-150">
+        <div className="px-3 sm:px-4 py-2 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 animate-in slide-in-from-bottom-2 duration-150">
           <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
             <Loader2 size={18} className="animate-spin" />
           </div>
@@ -269,7 +269,7 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
               Uploading attachment...
             </p>
             <p className="text-[10px] text-slate-400 dark:text-slate-500">
-              Sending file to Cloudinary
+              Sending file to server
             </p>
           </div>
         </div>
@@ -291,23 +291,23 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
         className="hidden"
       />
 
-      <form onSubmit={handleSend} className="p-4 flex items-center gap-3">
+      <form onSubmit={handleSend} className="p-2 sm:p-4 flex items-center gap-1.5 sm:gap-3 w-full max-w-full overflow-hidden">
         {/* Left side: attachment buttons + model selector */}
-        <div className="flex items-center gap-1 text-slate-400">
+        <div className="flex items-center gap-0.5 sm:gap-1 text-slate-400 shrink-0">
           <button
             type="button"
             onClick={() => imageInputRef.current?.click()}
             disabled={isUploading}
-            className="p-2 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+            className="p-1.5 sm:p-2 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
             title="Attach Image"
           >
-            <Image size={20} />
+            <Image size={18} className="sm:w-5 sm:h-5" />
           </button>
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className="p-2 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+            className="p-1.5 sm:p-2 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:opacity-50 hidden sm:block"
             title="Attach File"
           >
             <Paperclip size={20} />
@@ -318,17 +318,17 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
             <button
               type="button"
               onClick={() => setShowModelDropdown(!showModelDropdown)}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
                 showModelDropdown
                   ? 'bg-indigo-50 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
                   : 'hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
               }`}
               title="Switch AI Model"
             >
-              <span className={`flex items-center justify-center w-4 h-4 bg-gradient-to-br ${currentStyle.gradient} text-white rounded-sm`}>
+              <span className={`flex items-center justify-center w-3 h-3 sm:w-4 sm:h-4 bg-gradient-to-br ${currentStyle.gradient} text-white rounded-[3px]`}>
                 {currentStyle.icon}
               </span>
-              <span className="hidden sm:inline max-w-[100px] truncate">
+              <span className="hidden md:inline max-w-[80px] sm:max-w-[100px] truncate text-[11px] sm:text-xs">
                 {currentModel?.name || 'Model'}
               </span>
               <ChevronDown
@@ -339,16 +339,16 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
 
             {/* ── Dropdown Panel ── */}
             {showModelDropdown && (
-              <div className="absolute bottom-full left-0 mb-2 w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl shadow-slate-200/50 dark:shadow-black/30 z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-150">
+              <div className="absolute bottom-full left-0 mb-2 w-64 sm:w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl shadow-slate-200/50 dark:shadow-black/30 z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-150">
                 {/* Header */}
                 <div className="px-3 py-2.5 border-b border-slate-100 dark:border-slate-700/50">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                     Select AI Model
                   </p>
                 </div>
 
                 {/* Model List */}
-                <div className="max-h-[240px] overflow-y-auto py-1.5">
+                <div className="max-h-[200px] sm:max-h-[240px] overflow-y-auto py-1.5">
                   {models.map((model) => {
                     const style = PROVIDER_STYLE[model.providerId] || DEFAULT_STYLE;
                     const isSelected = model.id === selectedModel;
@@ -363,7 +363,7 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
                           setSelectedModel(model.id);
                           setShowModelDropdown(false);
                         }}
-                        className={`w-full flex items-start gap-3 px-3 py-2.5 text-left transition-all cursor-pointer ${
+                        className={`w-full flex items-start gap-2.5 sm:gap-3 px-3 py-2 sm:py-2.5 text-left transition-all cursor-pointer ${
                           isDisabled
                             ? 'opacity-40 cursor-not-allowed'
                             : isSelected
@@ -373,25 +373,25 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
                         title={isDisabled ? `Set ${model.providerId.toUpperCase()}_API_KEY in .env to enable` : model.description}
                       >
                         {/* Provider icon */}
-                        <div className={`mt-0.5 flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br ${style.gradient} text-white shrink-0 shadow-sm`}>
+                        <div className={`mt-0.5 flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-gradient-to-br ${style.gradient} text-white shrink-0 shadow-sm`}>
                           {style.icon}
                         </div>
 
                         {/* Model info */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className={`text-sm font-semibold ${
+                          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                            <span className={`text-[13px] sm:text-sm font-semibold truncate ${
                               isSelected
                                 ? 'text-indigo-700 dark:text-indigo-300'
                                 : 'text-slate-800 dark:text-slate-100'
                             }`}>
                               {model.name}
                             </span>
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${style.badgeColor}`}>
+                            <span className={`text-[9px] sm:text-[10px] font-bold px-1 sm:px-1.5 py-0.5 rounded-full whitespace-nowrap ${style.badgeColor}`}>
                               {model.badge}
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight">
+                          <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight truncate">
                             {isDisabled
                               ? `Requires ${model.providerId.toUpperCase()}_API_KEY`
                               : model.providerName}
@@ -400,7 +400,7 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
 
                         {/* Selected indicator */}
                         {isSelected && (
-                          <div className="mt-1 w-2 h-2 rounded-full bg-indigo-500 shrink-0 animate-pulse" />
+                          <div className="mt-1.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-indigo-500 shrink-0 animate-pulse" />
                         )}
                       </button>
                     );
@@ -415,16 +415,16 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
           type="text"
           value={content}
           onChange={handleInputChange}
-          placeholder={attachedFile ? "Add a message..." : "Type a message..."}
-          className="flex-1 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-inner/5"
+          placeholder={attachedFile ? "Add message..." : "Type a message..."}
+          className="flex-1 min-w-0 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 border border-slate-200 dark:border-slate-800 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-inner/5"
         />
 
         <button
           type="submit"
           disabled={!content.trim() && !attachedFile}
-          className="p-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:opacity-95 disabled:opacity-50 disabled:from-indigo-600 disabled:to-indigo-600 text-white rounded-xl shadow-md shadow-indigo-500/15 transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95"
+          className="p-2 sm:p-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:opacity-95 disabled:opacity-50 disabled:from-indigo-600 disabled:to-indigo-600 text-white rounded-xl shadow-md shadow-indigo-500/15 transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95"
         >
-          <Send size={18} />
+          <Send size={16} className="sm:w-4 sm:h-4" />
         </button>
       </form>
     </div>

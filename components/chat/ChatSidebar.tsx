@@ -29,7 +29,7 @@ export function ChatSidebar({ onCreateChat }: ChatSidebarProps) {
   });
 
   return (
-    <div className="w-80 h-full border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shrink-0">
+    <div className="w-full h-full border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shrink-0">
       {/* Search Header */}
       <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col gap-3">
         <div className="flex items-center justify-between">

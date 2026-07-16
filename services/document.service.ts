@@ -63,4 +63,14 @@ export const documentService = {
     );
     return res.data;
   },
+
+  /**
+   * PATCH /documents/:id/star — toggle starred state
+   */
+  starDocument: async (id: string): Promise<ApiResult<Document>> => {
+    const res = await axiosClient.patch<ApiResult<Document>>(
+      API_ROUTES.DOCUMENTS.STAR(id)
+    );
+    return res.data;
+  },
 };
