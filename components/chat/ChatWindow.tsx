@@ -47,8 +47,37 @@ export function ChatWindow({ room }: ChatWindowProps) {
   );
 
   const getSuggestions = () => {
-    const lower = room.name?.toLowerCase() || '';
-    if (lower.includes('java') || roomMessages.some(m => m.content?.toLowerCase().includes('java'))) {
+    const lastMsgText = lastMessage?.content?.toLowerCase() || '';
+    const userMessage = roomMessages[roomMessages.length - 2];
+    const userMsgText = userMessage?.content?.toLowerCase() || '';
+    const combinedText = `${lastMsgText} ${userMsgText} ${room.name?.toLowerCase() || ''}`;
+
+    // Java Context
+    if (combinedText.includes('java')) {
+      if (combinedText.includes('oop') || combinedText.includes('object') || combinedText.includes('class') || combinedText.includes('polymorphism') || combinedText.includes('inheritance')) {
+        return [
+          'Explain Polymorphism in Java',
+          'What is Inheritance in Java?',
+          'Java OOP Code Examples',
+          'Encapsulation vs Abstraction'
+        ];
+      }
+      if (combinedText.includes('loop') || combinedText.includes('for') || combinedText.includes('while') || combinedText.includes('control')) {
+        return [
+          'For vs While Loops in Java',
+          'Switch-Case in Java',
+          'Break vs Continue in Java',
+          'Nested Loop Examples'
+        ];
+      }
+      if (combinedText.includes('variable') || combinedText.includes('type') || combinedText.includes('primitive')) {
+        return [
+          'Primitive vs Reference Types',
+          'How to declare variables',
+          'Scope of variables in Java',
+          'What is the final keyword?'
+        ];
+      }
       return [
         'Explain OOP in Java',
         'Java vs Python',
@@ -56,11 +85,63 @@ export function ChatWindow({ room }: ChatWindowProps) {
         'Best IDE for Java'
       ];
     }
+
+    // Python Context
+    if (combinedText.includes('python')) {
+      return [
+        'Python vs JavaScript',
+        'Write a loop in Python',
+        'Python OOP basics',
+        'Best libraries for AI'
+      ];
+    }
+
+    // JS/React/NextJS Context
+    if (combinedText.includes('javascript') || combinedText.includes('js') || combinedText.includes('react') || combinedText.includes('next.js') || combinedText.includes('nextjs')) {
+      return [
+        'React state hook guide',
+        'NextJS App Router tips',
+        'What is virtual DOM?',
+        'JS Async/Await example'
+      ];
+    }
+
+    // AI Image / Generation Context
+    if (combinedText.includes('image') || combinedText.includes('art') || combinedText.includes('generation') || combinedText.includes('flux') || combinedText.includes('paint') || combinedText.includes('draw')) {
+      return [
+        'Generate a cartoon robot',
+        'FLUX vs Midjourney',
+        'Advanced prompt tips',
+        'Resize generated image'
+      ];
+    }
+
+    // Travel Context
+    if (combinedText.includes('travel') || combinedText.includes('trip') || combinedText.includes('plan') || combinedText.includes('itinerary') || combinedText.includes('visit')) {
+      return [
+        'Suggest budget options',
+        'Pack list for this trip',
+        'Best time to visit',
+        'Find local restaurants'
+      ];
+    }
+
+    // Fitness / Nutrition Context
+    if (combinedText.includes('fit') || combinedText.includes('nutrition') || combinedText.includes('diet') || combinedText.includes('workout') || combinedText.includes('health') || combinedText.includes('weight')) {
+      return [
+        'Calculate my macro intake',
+        'Home workout plan',
+        'Healthy snack options',
+        'How to track progress'
+      ];
+    }
+
+    // General Fallbacks
     return [
-      'Explain OOP concepts',
-      'Compare Python and JavaScript',
-      'Write a simple API server',
-      'Recommended coding practices'
+      'Can you elaborate on that?',
+      'Give me a code example',
+      'What are the pros and cons?',
+      'Explain it to a beginner'
     ];
   };
 
@@ -116,6 +197,8 @@ export function ChatWindow({ room }: ChatWindowProps) {
         <TypingIndicator typingUsers={roomTyping} />
 
         <ChatInput
+          roomId={room.id}
+          isNewRoom={roomMessages.length === 0}
           onSendMessage={(content, type, fileUrl, fileName, model) => sendMessage(room.id, content, type, fileUrl, fileName, model)}
           onTyping={(isTyping) => emitTyping(room.id, isTyping)}
         />

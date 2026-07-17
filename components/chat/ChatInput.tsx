@@ -6,6 +6,8 @@ import { chatService } from '../../services/chat.service';
 import { settingsService, ProviderStatus } from '../../services/settings.service';
 
 interface ChatInputProps {
+  roomId: string;
+  isNewRoom?: boolean;
   onSendMessage: (
     content: string,
     type?: 'text' | 'image' | 'file',
@@ -70,7 +72,7 @@ const formatTimeMinutes = (seconds: number): string => {
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 };
 
-export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
+export function ChatInput({ roomId, isNewRoom, onSendMessage, onTyping }: ChatInputProps) {
   const [content, setContent] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
@@ -125,6 +127,13 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
 
     fetchModels();
   }, []);
+
+  // Reset selected model to 'gemini-3.1-flash-lite' for new rooms
+  useEffect(() => {
+    if (isNewRoom) {
+      setSelectedModel('gemini-3.1-flash-lite');
+    }
+  }, [roomId, isNewRoom]);
 
   // Close dropdown on outside click
   useEffect(() => {

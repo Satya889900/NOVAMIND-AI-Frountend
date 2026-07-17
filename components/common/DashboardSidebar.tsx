@@ -42,12 +42,6 @@ export function DashboardSidebar() {
       description: 'Active conversations',
     },
     {
-      name: 'AI Assistant',
-      href: '/chat',
-      icon: Sparkles,
-      description: 'Smart AI Companions',
-    },
-    {
       name: 'Knowledge Base',
       href: '/documents',
       icon: FileText,

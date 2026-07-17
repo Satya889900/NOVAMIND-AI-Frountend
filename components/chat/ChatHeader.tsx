@@ -185,7 +185,6 @@ export function ChatHeader({ room }: ChatHeaderProps) {
                 Online
               </span>
             </div>
-            <ChevronDown size={11} className="text-slate-400 shrink-0" />
           </div>
         )}
 
