@@ -15,11 +15,18 @@ interface ChatMessageProps {
 const MODEL_DISPLAY: Record<string, { label: string; bg: string; border: string; text: string; icon: 'sparkles' | 'zap' | 'bot' | 'image' }> = {
   'gemini-3.1-flash-lite': { label: 'Gemini 2.5 Flash', bg: 'bg-blue-50 dark:bg-blue-950/20', border: 'border-blue-200/50 dark:border-blue-800/30', text: 'text-blue-600 dark:text-blue-400', icon: 'sparkles' },
   'gemini-3.5-flash':      { label: 'Gemini 2.5 Pro',   bg: 'bg-violet-50 dark:bg-violet-950/20', border: 'border-violet-200/50 dark:border-violet-800/30', text: 'text-violet-600 dark:text-violet-400', icon: 'sparkles' },
+  'gpt-4o-mini': { label: 'GPT-4o Mini', bg: 'bg-emerald-50 dark:bg-emerald-950/20', border: 'border-emerald-200/50 dark:border-emerald-800/30', text: 'text-emerald-600 dark:text-emerald-400', icon: 'sparkles' },
+  'gpt-4o':      { label: 'GPT-4o',      bg: 'bg-teal-50 dark:bg-teal-950/20', border: 'border-teal-200/50 dark:border-teal-800/30', text: 'text-teal-600 dark:text-teal-400', icon: 'sparkles' },
   'llama-3.3-70b-versatile': { label: 'Llama 3.3 · 70B', bg: 'bg-orange-50 dark:bg-orange-950/20', border: 'border-orange-200/50 dark:border-orange-800/30', text: 'text-orange-600 dark:text-orange-400', icon: 'zap' },
   'Qwen/Qwen2.5-7B-Instruct': { label: 'Qwen 2.5 · 7B', bg: 'bg-emerald-50 dark:bg-emerald-950/20', border: 'border-emerald-200/50 dark:border-emerald-800/30', text: 'text-emerald-600 dark:text-emerald-400', icon: 'bot' },
   'deepseek-ai/DeepSeek-R1': { label: 'DeepSeek R1', bg: 'bg-green-50 dark:bg-green-950/20', border: 'border-green-200/50 dark:border-green-800/30', text: 'text-green-600 dark:text-green-400', icon: 'bot' },
   'deepseek-ai/DeepSeek-V3': { label: 'DeepSeek V3', bg: 'bg-teal-50 dark:bg-teal-950/20', border: 'border-teal-200/50 dark:border-teal-800/30', text: 'text-teal-600 dark:text-teal-400', icon: 'bot' },
+  'deepseek-chat': { label: 'DeepSeek V3', bg: 'bg-teal-50 dark:bg-teal-950/20', border: 'border-teal-200/50 dark:border-teal-800/30', text: 'text-teal-600 dark:text-teal-400', icon: 'bot' },
+  'deepseek-reasoner': { label: 'DeepSeek R1', bg: 'bg-green-50 dark:bg-green-950/20', border: 'border-green-200/50 dark:border-green-800/30', text: 'text-green-600 dark:text-green-400', icon: 'bot' },
   'flux-schnell': { label: 'FLUX.1 Schnell', bg: 'bg-amber-50 dark:bg-amber-950/20', border: 'border-amber-200/50 dark:border-amber-800/30', text: 'text-amber-600 dark:text-amber-400', icon: 'image' },
+  'openrouter/meta-llama/llama-3.3-70b-instruct': { label: 'Llama 3.3 · 70B (OR)', bg: 'bg-orange-50 dark:bg-orange-950/20', border: 'border-orange-200/50 dark:border-orange-800/30', text: 'text-orange-600 dark:text-orange-400', icon: 'zap' },
+  'openrouter/deepseek/deepseek-r1': { label: 'DeepSeek R1 (OR)', bg: 'bg-green-50 dark:bg-green-950/20', border: 'border-green-200/50 dark:border-green-800/30', text: 'text-green-600 dark:text-green-400', icon: 'bot' },
+  'openrouter/google/gemini-2.5-flash': { label: 'Gemini 2.5 Flash (OR)', bg: 'bg-blue-50 dark:bg-blue-950/20', border: 'border-blue-200/50 dark:border-blue-800/30', text: 'text-blue-600 dark:text-blue-400', icon: 'sparkles' },
 };
 
 // Utility to format raw JSON tool blocks that might leak from backend

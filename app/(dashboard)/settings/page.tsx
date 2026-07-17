@@ -251,7 +251,7 @@ export default function SettingsPage() {
 
             {/* Dynamic cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full">
-              {providers.flatMap(provider => 
+              {providers.filter(p => p.configured).flatMap(provider => 
                 provider.models.map((model) => {
                   const active = defaultModel === model.id;
                   
@@ -271,6 +271,12 @@ export default function SettingsPage() {
                     modelIcon = <Zap className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-emerald-500'}`} />;
                   } else if (provider.id === 'huggingface') {
                     modelIcon = <Bot className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-yellow-550'}`} />;
+                  } else if (provider.id === 'deepseek') {
+                    modelIcon = <Bot className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-teal-500'}`} />;
+                  } else if (provider.id === 'openai') {
+                    modelIcon = <Sparkles className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-emerald-500'}`} />;
+                  } else if (provider.id === 'openrouter') {
+                    modelIcon = <Sparkles className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-fuchsia-500'}`} />;
                   } else if (provider.id === 'blackforest') {
                     modelIcon = <Image className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-amber-500'}`} />;
                   }

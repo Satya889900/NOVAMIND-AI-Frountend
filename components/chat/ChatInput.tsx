@@ -53,6 +53,21 @@ const PROVIDER_STYLE: Record<string, { icon: React.ReactNode; gradient: string; 
     gradient: 'from-yellow-500 to-amber-500',
     badgeColor: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
   },
+  deepseek: {
+    icon: <Bot size={11} />,
+    gradient: 'from-teal-500 to-emerald-500',
+    badgeColor: 'bg-teal-500/10 text-teal-600 dark:text-teal-400',
+  },
+  openai: {
+    icon: <Sparkles size={11} />,
+    gradient: 'from-emerald-500 to-teal-500',
+    badgeColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  },
+  openrouter: {
+    icon: <Sparkles size={11} />,
+    gradient: 'from-fuchsia-500 to-pink-500',
+    badgeColor: 'bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400',
+  },
   blackforest: {
     icon: <Image size={11} />,
     gradient: 'from-amber-500 to-orange-500',
@@ -106,17 +121,19 @@ export function ChatInput({ roomId, isNewRoom, onSendMessage, onTyping }: ChatIn
 
         const allModels: ModelItem[] = [];
         providers.forEach((provider: ProviderStatus) => {
-          provider.models.forEach((m) => {
-            allModels.push({
-              id: m.id,
-              name: m.name,
-              badge: m.badge,
-              description: m.description,
-              providerId: provider.id,
-              providerName: provider.name,
-              configured: provider.configured,
+          if (provider.configured) {
+            provider.models.forEach((m) => {
+              allModels.push({
+                id: m.id,
+                name: m.name,
+                badge: m.badge,
+                description: m.description,
+                providerId: provider.id,
+                providerName: provider.name,
+                configured: provider.configured,
+              });
             });
-          });
+          }
         });
 
         setModels(allModels);
