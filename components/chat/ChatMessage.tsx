@@ -3,9 +3,13 @@ import { Message } from '../../types/chat';
 import { useAuthStore } from '../../store/authStore';
 import { useChatStore } from '../../store/chatStore';
 import { formatTime } from '../../lib/utils';
-import { MoreVertical, Pencil, Trash2, X, Check, FileText, Sparkles, Zap, Bot, Image as ImageIcon, Copy } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, X, Check, FileText, Sparkles, Zap, Bot, Image as ImageIcon, Copy, Mic, Volume2, VolumeX } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+
+
+
+
 
 interface ChatMessageProps {
   message: Message;
@@ -54,8 +58,54 @@ export function ChatMessage({ message }: ChatMessageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content || '');
   const [copied, setCopied] = useState(false);
+  const [isPlayingSpeech, setIsPlayingSpeech] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const editInputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Stop active speech on component unmount
+  useEffect(() => {
+    return () => {
+      if (isPlayingSpeech) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [isPlayingSpeech]);
+
+  const handleSpeak = () => {
+    if ('speechSynthesis' in window) {
+      if (isPlayingSpeech) {
+        window.speechSynthesis.cancel();
+        setIsPlayingSpeech(false);
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+
+      // Clean up markdown/custom labels for natural pronunciation
+      const cleanText = (message.content || '')
+        .replace(/🎤 \[Voice Message\]:/g, '')
+        .replace(/\*\*\[Transcribed Voice\]:\*\*/g, '')
+        .replace(/[\*\_`#\-\[\]\(\)]/g, '') // remove markdown tags
+        .trim();
+
+      if (!cleanText) return;
+
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      
+      utterance.onend = () => {
+        setIsPlayingSpeech(false);
+      };
+
+      utterance.onerror = () => {
+        setIsPlayingSpeech(false);
+      };
+
+      setIsPlayingSpeech(true);
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert('Text-to-speech is not supported in this browser.');
+    }
+  };
 
   const handleCopy = () => {
     const text = message.content || '';
@@ -198,6 +248,26 @@ export function ChatMessage({ message }: ChatMessageProps) {
                       <p className={`mt-1 font-medium leading-relaxed ${isMe ? 'text-white' : 'text-slate-700 dark:text-slate-300'}`}>{message.content}</p>
                     )}
                   </div>
+                ) : message.type === 'file' && message.fileUrl && (
+                  message.fileUrl.endsWith('.webm') ||
+                  message.fileUrl.endsWith('.wav') ||
+                  message.fileUrl.endsWith('.mp3') ||
+                  message.fileUrl.endsWith('.m4a') ||
+                  message.fileName?.toLowerCase().includes('voice') ||
+                  message.fileName?.toLowerCase().endsWith('.webm') ||
+                  message.fileName?.toLowerCase().endsWith('.wav')
+                ) ? (
+                  <div className="flex flex-col gap-2 p-1 min-w-[240px] max-w-xs">
+                    <span className="text-[10px] uppercase font-bold tracking-wider opacity-75 flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                      <Mic size={11} className="text-indigo-500 animate-pulse shrink-0" />
+                      Voice Message
+                    </span>
+                    <audio
+                      src={message.fileUrl}
+                      controls
+                      className="w-full h-8 outline-none dark:invert opacity-90"
+                    />
+                  </div>
                 ) : message.type === 'file' && message.fileUrl ? (
                   <div className="flex items-center gap-3 p-2 rounded-lg bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 max-w-xs">
                     <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50 shrink-0">
@@ -218,6 +288,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
                     </div>
                   </div>
                 ) : (
+
                   isMe ? (
                     <div className="whitespace-pre-wrap font-medium">{message.content}</div>
                   ) : (
@@ -233,6 +304,20 @@ export function ChatMessage({ message }: ChatMessageProps) {
 
             {/* Action Menu (Visible on Hover) */}
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0">
+              {message.content && message.type !== 'image' && (
+                <button
+                  onClick={handleSpeak}
+                  className={`p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer ${
+                    isPlayingSpeech 
+                      ? 'text-indigo-600 dark:text-indigo-400 animate-pulse' 
+                      : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-250'
+                  }`}
+                  title={isPlayingSpeech ? 'Stop reading' : 'Read aloud'}
+                >
+                  {isPlayingSpeech ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                </button>
+              )}
+
               <button
                 onClick={handleCopy}
                 className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-250 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
@@ -240,6 +325,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
               >
                 {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
               </button>
+
 
               {isMe && (
                 <div ref={menuRef} className="relative">

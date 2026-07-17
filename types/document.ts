@@ -12,6 +12,9 @@ export interface Document {
   cloudinaryPublicId: string;
   status: DocumentStatus;
   isStarred: boolean;
+  summary?: string;
+  keyTakeaways?: string[];
+  suggestedQuestions?: string[];
   createdAt: string;
   updatedAt: string;
 }

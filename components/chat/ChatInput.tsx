@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Image, Paperclip, Loader2, FileText, X, ChevronDown, Sparkles, Zap, Bot } from 'lucide-react';
+import { Send, Image, Paperclip, Loader2, FileText, X, ChevronDown, Sparkles, Zap, Bot, Mic, Square } from 'lucide-react';
 import { chatService } from '../../services/chat.service';
 import { settingsService, ProviderStatus } from '../../services/settings.service';
 
@@ -64,10 +64,23 @@ const DEFAULT_STYLE = {
   badgeColor: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
 };
 
+const formatTimeMinutes = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+};
+
 export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
   const [content, setContent] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
+
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Model selector state
   const [models, setModels] = useState<ModelItem[]>([]);
@@ -79,6 +92,7 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
 
   // Fetch available models on mount
   useEffect(() => {
@@ -144,6 +158,103 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
       onTyping(false);
     }, 2000);
   };
+
+  // Start recording voice
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioFile = new File([audioBlob], `voice_message_${Date.now()}.webm`, { type: 'audio/webm' });
+        
+        // Stop all stream tracks to release microphone
+        stream.getTracks().forEach((track) => track.stop());
+
+        // Upload and send directly
+        try {
+          setIsUploading(true);
+          const data = await chatService.uploadChatFile(audioFile);
+          
+          // Trigger message send immediately!
+          onSendMessage(
+            '🎤 Voice Message',
+            'file',
+            data.url,
+            data.fileName,
+            selectedModel || undefined
+          );
+        } catch (err: any) {
+          console.error(err);
+          alert('Failed to send voice message: ' + (err.response?.data?.message || err.message));
+        } finally {
+          setIsUploading(false);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+
+      // Start timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime((t) => t + 1);
+      }, 1000);
+    } catch (err) {
+      console.error('Failed to start recording:', err);
+      alert('Could not access microphone. Please check permissions.');
+    }
+  };
+
+  // Stop recording voice
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+    }
+  };
+
+  // Cancel recording voice
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.onstop = null;
+      mediaRecorderRef.current.stop();
+      
+      if (mediaRecorderRef.current.stream) {
+        mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
+      }
+      
+      setIsRecording(false);
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+      audioChunksRef.current = [];
+      setRecordingTime(0);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -291,7 +402,8 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
         className="hidden"
       />
 
-      <form onSubmit={handleSend} className="p-2 sm:p-4 flex items-center gap-1.5 sm:gap-3 w-full max-w-full overflow-hidden">
+      <form onSubmit={handleSend} className="p-2 sm:p-4 flex items-center gap-1.5 sm:gap-3 w-full max-w-full">
+
         {/* Left side: attachment buttons + model selector */}
         <div className="flex items-center gap-0.5 sm:gap-1 text-slate-400 shrink-0">
           <button
@@ -411,21 +523,64 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
           </div>
         </div>
 
-        <input
-          type="text"
-          value={content}
-          onChange={handleInputChange}
-          placeholder={attachedFile ? "Add message..." : "Type a message..."}
-          className="flex-1 min-w-0 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 border border-slate-200 dark:border-slate-800 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-inner/5"
-        />
+        {isRecording ? (
+          <div className="flex-1 flex items-center justify-between px-3 py-2 bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/50 rounded-xl">
+            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-450">
+              <span className="w-2 h-2 rounded-full bg-rose-600 dark:bg-rose-500 animate-ping shrink-0" />
+              <span className="text-xs sm:text-sm font-semibold tracking-wide">
+                Recording: {formatTimeMinutes(recordingTime)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={cancelRecording}
+                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg cursor-pointer transition-colors"
+                title="Cancel Recording"
+              >
+                <X size={15} />
+              </button>
+              <button
+                type="button"
+                onClick={stopRecording}
+                className="p-1 sm:p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg cursor-pointer transition-colors"
+                title="Stop & Send Voice"
+              >
+                <Square size={12} className="fill-current" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <input
+            type="text"
+            value={content}
+            onChange={handleInputChange}
+            placeholder={attachedFile ? "Add message..." : "Type a message..."}
+            className="flex-1 min-w-0 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 border border-slate-200 dark:border-slate-800 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-inner/5"
+          />
+        )}
 
-        <button
-          type="submit"
-          disabled={!content.trim() && !attachedFile}
-          className="p-2 sm:p-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:opacity-95 disabled:opacity-50 disabled:from-indigo-600 disabled:to-indigo-600 text-white rounded-xl shadow-md shadow-indigo-500/15 transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95"
-        >
-          <Send size={16} className="sm:w-4 sm:h-4" />
-        </button>
+        {!isRecording && (
+          content.trim() || attachedFile ? (
+            <button
+              type="submit"
+              className="p-2 sm:p-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:opacity-95 text-white rounded-xl shadow-md shadow-indigo-500/15 transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95"
+              title="Send Message"
+            >
+              <Send size={16} className="sm:w-4 sm:h-4" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={startRecording}
+              disabled={isUploading}
+              className="p-2 sm:p-2.5 bg-slate-100 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-950/40 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 border border-slate-250 dark:border-slate-700 rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95 disabled:opacity-50"
+              title="Record Voice Note"
+            >
+              <Mic size={16} className="sm:w-4 sm:h-4" />
+            </button>
+          )
+        )}
       </form>
     </div>
   );
