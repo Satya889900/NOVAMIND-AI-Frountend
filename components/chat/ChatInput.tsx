@@ -63,6 +63,16 @@ const PROVIDER_STYLE: Record<string, { icon: React.ReactNode; gradient: string; 
     gradient: 'from-emerald-500 to-teal-500',
     badgeColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
   },
+  cerebras: {
+    icon: <Zap size={11} />,
+    gradient: 'from-amber-500 to-red-650',
+    badgeColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  },
+  cloudflare: {
+    icon: <Zap size={11} />,
+    gradient: 'from-orange-500 to-amber-500',
+    badgeColor: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
+  },
   openrouter: {
     icon: <Sparkles size={11} />,
     gradient: 'from-fuchsia-500 to-pink-500',
