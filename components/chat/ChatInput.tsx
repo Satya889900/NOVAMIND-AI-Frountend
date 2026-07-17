@@ -37,29 +37,29 @@ interface ModelItem {
 // Map provider ids to icons & colors
 const PROVIDER_STYLE: Record<string, { icon: React.ReactNode; gradient: string; badgeColor: string }> = {
   gemini: {
-    icon: <Sparkles size={14} />,
+    icon: <Sparkles size={11} />,
     gradient: 'from-blue-500 to-violet-500',
     badgeColor: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
   },
   groq: {
-    icon: <Zap size={14} />,
+    icon: <Zap size={11} />,
     gradient: 'from-orange-500 to-red-500',
     badgeColor: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
   },
   huggingface: {
-    icon: <Bot size={14} />,
+    icon: <Bot size={11} />,
     gradient: 'from-yellow-500 to-amber-500',
     badgeColor: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
   },
   blackforest: {
-    icon: <Image size={14} />,
+    icon: <Image size={11} />,
     gradient: 'from-amber-500 to-orange-500',
     badgeColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
   },
 };
 
 const DEFAULT_STYLE = {
-  icon: <Bot size={14} />,
+  icon: <Bot size={11} />,
   gradient: 'from-slate-500 to-slate-600',
   badgeColor: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
 };
@@ -85,14 +85,12 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
   // Model selector state
   const [models, setModels] = useState<ModelItem[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>('');
-  const [defaultModel, setDefaultModel] = useState<string>('');
   const [showModelDropdown, setShowModelDropdown] = useState(false);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
 
   // Fetch available models on mount
   useEffect(() => {
@@ -119,7 +117,6 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
         });
 
         setModels(allModels);
-        setDefaultModel(settings.defaultModel);
         setSelectedModel(settings.defaultModel);
       } catch (err) {
         console.error('Failed to load AI models:', err);
@@ -142,8 +139,7 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showModelDropdown]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
+  const handleInputChange = (val: string) => {
     setContent(val);
 
     // Emit typing start
@@ -186,7 +182,6 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
           setIsUploading(true);
           const data = await chatService.uploadChatFile(audioFile);
           
-          // Trigger message send immediately!
           onSendMessage(
             '🎤 Voice Message',
             'file',
@@ -206,7 +201,6 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
       setIsRecording(true);
       setRecordingTime(0);
 
-      // Start timer
       recordingTimerRef.current = setInterval(() => {
         setRecordingTime((t) => t + 1);
       }, 1000);
@@ -260,7 +254,6 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate size (10MB limit)
     if (file.size > 10 * 1024 * 1024) {
       alert('File size exceeds the 10 MB limit.');
       return;
@@ -300,7 +293,6 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
         : 'file'
       : 'text';
 
-    // Always send the selected model
     const modelOverride = selectedModel || undefined;
 
     onSendMessage(
@@ -320,6 +312,13 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend(e);
+    }
+  };
+
   useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
@@ -334,12 +333,13 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
     : DEFAULT_STYLE;
 
   return (
-    <div className="flex flex-col border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 relative w-full">
+    <div className="p-4 flex flex-col gap-2 shrink-0 bg-[#ffffff] dark:bg-[#0c0a1b] w-full border-t border-slate-100 dark:border-slate-800/40">
+      
       {/* Attached File Preview */}
       {attachedFile && (
-        <div className="px-3 sm:px-4 py-2 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 animate-in slide-in-from-bottom-2 duration-150 relative">
+        <div className="px-3.5 py-2.5 bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-850/40 rounded-2xl flex items-center gap-3 animate-in slide-in-from-bottom-2 duration-150 relative mb-1 max-w-md">
           {attachedFile.fileType.startsWith('image/') ? (
-            <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shrink-0">
+            <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shrink-0">
               <img
                 src={attachedFile.url}
                 alt="Upload preview"
@@ -347,39 +347,39 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
               />
             </div>
           ) : (
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50 shrink-0">
+            <div className="w-11 h-11 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50 shrink-0">
               <FileText size={18} />
             </div>
           )}
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
               {attachedFile.fileName}
             </p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5">
               {(attachedFile.fileSize / 1024).toFixed(1)} KB · Ready to send
             </p>
           </div>
           <button
             type="button"
             onClick={clearAttachment}
-            className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer transition-colors shrink-0"
+            className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-250 cursor-pointer transition-colors shrink-0"
           >
-            <X size={16} />
+            <X size={14} />
           </button>
         </div>
       )}
 
       {/* Uploading State indicator */}
       {isUploading && (
-        <div className="px-3 sm:px-4 py-2 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 animate-in slide-in-from-bottom-2 duration-150">
-          <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
-            <Loader2 size={18} className="animate-spin" />
+        <div className="px-3.5 py-2.5 bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-850/40 rounded-2xl flex items-center gap-3 animate-in slide-in-from-bottom-2 duration-150 mb-1 max-w-md">
+          <div className="w-11 h-11 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+            <Loader2 size={16} className="animate-spin" />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
               Uploading attachment...
             </p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5">
               Sending file to server
             </p>
           </div>
@@ -402,127 +402,9 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
         className="hidden"
       />
 
-      <form onSubmit={handleSend} className="p-2 sm:p-4 flex items-center gap-1.5 sm:gap-3 w-full max-w-full">
-
-        {/* Left side: attachment buttons + model selector */}
-        <div className="flex items-center gap-0.5 sm:gap-1 text-slate-400 shrink-0">
-          <button
-            type="button"
-            onClick={() => imageInputRef.current?.click()}
-            disabled={isUploading}
-            className="p-1.5 sm:p-2 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
-            title="Attach Image"
-          >
-            <Image size={18} className="sm:w-5 sm:h-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="p-1.5 sm:p-2 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:opacity-50 hidden sm:block"
-            title="Attach File"
-          >
-            <Paperclip size={20} />
-          </button>
-
-          {/* ═══════════════════ MODEL SELECTOR ═══════════════════ */}
-          <div ref={dropdownRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setShowModelDropdown(!showModelDropdown)}
-              className={`flex items-center gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
-                showModelDropdown
-                  ? 'bg-indigo-50 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
-                  : 'hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
-              }`}
-              title="Switch AI Model"
-            >
-              <span className={`flex items-center justify-center w-3 h-3 sm:w-4 sm:h-4 bg-gradient-to-br ${currentStyle.gradient} text-white rounded-[3px]`}>
-                {currentStyle.icon}
-              </span>
-              <span className="hidden md:inline max-w-[80px] sm:max-w-[100px] truncate text-[11px] sm:text-xs">
-                {currentModel?.name || 'Model'}
-              </span>
-              <ChevronDown
-                size={12}
-                className={`transition-transform duration-200 ${showModelDropdown ? 'rotate-180' : ''}`}
-              />
-            </button>
-
-            {/* ── Dropdown Panel ── */}
-            {showModelDropdown && (
-              <div className="absolute bottom-full left-0 mb-2 w-64 sm:w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl shadow-slate-200/50 dark:shadow-black/30 z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-150">
-                {/* Header */}
-                <div className="px-3 py-2.5 border-b border-slate-100 dark:border-slate-700/50">
-                  <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                    Select AI Model
-                  </p>
-                </div>
-
-                {/* Model List */}
-                <div className="max-h-[200px] sm:max-h-[240px] overflow-y-auto py-1.5">
-                  {models.map((model) => {
-                    const style = PROVIDER_STYLE[model.providerId] || DEFAULT_STYLE;
-                    const isSelected = model.id === selectedModel;
-                    const isDisabled = !model.configured;
-
-                    return (
-                      <button
-                        key={model.id}
-                        type="button"
-                        disabled={isDisabled}
-                        onClick={() => {
-                          setSelectedModel(model.id);
-                          setShowModelDropdown(false);
-                        }}
-                        className={`w-full flex items-start gap-2.5 sm:gap-3 px-3 py-2 sm:py-2.5 text-left transition-all cursor-pointer ${
-                          isDisabled
-                            ? 'opacity-40 cursor-not-allowed'
-                            : isSelected
-                            ? 'bg-indigo-50/60 dark:bg-indigo-950/20'
-                            : 'hover:bg-slate-50 dark:hover:bg-slate-700/40'
-                        }`}
-                        title={isDisabled ? `Set ${model.providerId.toUpperCase()}_API_KEY in .env to enable` : model.description}
-                      >
-                        {/* Provider icon */}
-                        <div className={`mt-0.5 flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-gradient-to-br ${style.gradient} text-white shrink-0 shadow-sm`}>
-                          {style.icon}
-                        </div>
-
-                        {/* Model info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                            <span className={`text-[13px] sm:text-sm font-semibold truncate ${
-                              isSelected
-                                ? 'text-indigo-700 dark:text-indigo-300'
-                                : 'text-slate-800 dark:text-slate-100'
-                            }`}>
-                              {model.name}
-                            </span>
-                            <span className={`text-[9px] sm:text-[10px] font-bold px-1 sm:px-1.5 py-0.5 rounded-full whitespace-nowrap ${style.badgeColor}`}>
-                              {model.badge}
-                            </span>
-                          </div>
-                          <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight truncate">
-                            {isDisabled
-                              ? `Requires ${model.providerId.toUpperCase()}_API_KEY`
-                              : model.providerName}
-                          </p>
-                        </div>
-
-                        {/* Selected indicator */}
-                        {isSelected && (
-                          <div className="mt-1.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-indigo-500 shrink-0 animate-pulse" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
+      {/* Input box card */}
+      <form onSubmit={handleSend} className="w-full flex flex-col border border-slate-200/80 dark:border-[#2a2455]/40 rounded-[22px] bg-white dark:bg-[#121025] p-3 gap-2 relative shadow-sm">
+        {/* Top: Writing Area */}
         {isRecording ? (
           <div className="flex-1 flex items-center justify-between px-3 py-2 bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/50 rounded-xl">
             <div className="flex items-center gap-2 text-rose-600 dark:text-rose-450">
@@ -535,7 +417,7 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
               <button
                 type="button"
                 onClick={cancelRecording}
-                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg cursor-pointer transition-colors"
+                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-450 hover:text-rose-650 rounded-lg cursor-pointer transition-colors"
                 title="Cancel Recording"
               >
                 <X size={15} />
@@ -543,45 +425,158 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
               <button
                 type="button"
                 onClick={stopRecording}
-                className="p-1 sm:p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg cursor-pointer transition-colors"
+                className="p-1.5 bg-rose-650 hover:bg-rose-700 text-white rounded-lg cursor-pointer transition-colors"
                 title="Stop & Send Voice"
               >
-                <Square size={12} className="fill-current" />
+                <Square size={11} className="fill-current" />
               </button>
             </div>
           </div>
         ) : (
-          <input
-            type="text"
+          <textarea
             value={content}
-            onChange={handleInputChange}
-            placeholder={attachedFile ? "Add message..." : "Type a message..."}
-            className="flex-1 min-w-0 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 border border-slate-200 dark:border-slate-800 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-inner/5"
+            onChange={(e) => handleInputChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            rows={1}
+            placeholder={attachedFile ? "Add a message..." : "Ask me anything..."}
+            className="w-full bg-transparent border-0 focus:ring-0 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none resize-none min-h-[36px] max-h-[140px] px-1 py-1"
           />
         )}
 
-        {!isRecording && (
-          content.trim() || attachedFile ? (
-            <button
-              type="submit"
-              className="p-2 sm:p-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:opacity-95 text-white rounded-xl shadow-md shadow-indigo-500/15 transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95"
-              title="Send Message"
-            >
-              <Send size={16} className="sm:w-4 sm:h-4" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={startRecording}
-              disabled={isUploading}
-              className="p-2 sm:p-2.5 bg-slate-100 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-950/40 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 border border-slate-250 dark:border-slate-700 rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95 disabled:opacity-50"
-              title="Record Voice Note"
-            >
-              <Mic size={16} className="sm:w-4 sm:h-4" />
-            </button>
-          )
-        )}
+        {/* Bottom Row: Actions Bar */}
+        <div className="flex items-center justify-between mt-1 shrink-0 px-1">
+          {/* Left Side toolbar options */}
+          <div className="flex items-center gap-2">
+            {/* Model switcher ("Use Tools" / selected model name) */}
+            <div ref={dropdownRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setShowModelDropdown(!showModelDropdown)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 bg-[#f0edff] dark:bg-[#1a1636] hover:bg-[#e5e1ff] dark:hover:bg-[#231e4a] border border-[#dcd8f8]/60 dark:border-[#382b6b]/40 rounded-full text-[11px] font-bold text-[#794ef7] dark:text-[#a78bfa] transition-all cursor-pointer`}
+                title="Switch AI Model"
+              >
+                <span className="shrink-0">
+                  {currentStyle.icon}
+                </span>
+                <span>{currentModel?.name || 'Use Tools'}</span>
+                <ChevronDown
+                  size={11}
+                  className={`transition-transform duration-200 ${showModelDropdown ? 'rotate-180' : ''}`}
+                />
+              </button>
+
+              {/* Model selection dropdown panel */}
+              {showModelDropdown && (
+                <div className="absolute bottom-full left-0 mb-2.5 w-64 sm:w-72 bg-white dark:bg-[#121025] border border-slate-200 dark:border-[#2f275e]/60 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-150">
+                  <div className="px-3.5 py-2.5 border-b border-slate-100 dark:border-[#221d45]/40">
+                    <p className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      Select AI Model
+                    </p>
+                  </div>
+                  <div className="max-h-[220px] overflow-y-auto py-1.5">
+                    {models.map((model) => {
+                      const style = PROVIDER_STYLE[model.providerId] || DEFAULT_STYLE;
+                      const isSelected = model.id === selectedModel;
+                      const isDisabled = !model.configured;
+
+                      return (
+                        <button
+                          key={model.id}
+                          type="button"
+                          disabled={isDisabled}
+                          onClick={() => {
+                            setSelectedModel(model.id);
+                            setShowModelDropdown(false);
+                          }}
+                          className={`w-full flex items-start gap-3 px-3.5 py-2 sm:py-2.5 text-left transition-all cursor-pointer ${
+                            isDisabled
+                              ? 'opacity-40 cursor-not-allowed'
+                              : isSelected
+                              ? 'bg-indigo-50/60 dark:bg-indigo-950/20'
+                              : 'hover:bg-slate-50 dark:hover:bg-[#201c45]/45'
+                          }`}
+                        >
+                          <div className={`mt-0.5 flex items-center justify-center w-6.5 h-6.5 rounded-lg bg-gradient-to-br ${style.gradient} text-white shrink-0 shadow-sm`}>
+                            {style.icon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className={`text-[12.5px] font-bold truncate ${isSelected ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-slate-800 dark:text-slate-200'}`}>
+                                {model.name}
+                              </span>
+                              <span className={`text-[8.5px] font-extrabold px-1.5 py-0.5 rounded-full whitespace-nowrap ${style.badgeColor}`}>
+                                {model.badge}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight truncate">
+                              {isDisabled ? `Requires ${model.providerId.toUpperCase()}_API_KEY` : model.providerName}
+                            </p>
+                          </div>
+                          {isSelected && (
+                            <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#794ef7] shrink-0 animate-pulse" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Media Attachment buttons */}
+            <div className="flex items-center gap-0.5 text-slate-400 shrink-0">
+              <button
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                disabled={isUploading}
+                className="p-1.5 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                title="Attach Image"
+              >
+                <Image size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="p-1.5 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                title="Attach File"
+              >
+                <Paperclip size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Right Side: Action send trigger */}
+          <div className="flex items-center">
+            {!isRecording && (
+              content.trim() || attachedFile ? (
+                <button
+                  type="submit"
+                  className="w-8 h-8 bg-gradient-to-r from-[#4d3df2] to-[#794ef7] hover:opacity-95 text-white rounded-full shadow-md shadow-[#4d3df2]/15 transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95 animate-in zoom-in-75 duration-100"
+                  title="Send Message"
+                >
+                  <Send size={12} className="text-white" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  disabled={isUploading}
+                  className="w-8 h-8 bg-[#f0edff] hover:bg-[#e5e1ff] dark:bg-[#1a1636] dark:hover:bg-[#231e4a] text-[#794ef7] dark:text-[#a78bfa] rounded-full border border-[#dcd8f8]/60 dark:border-[#382b6b]/40 transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95 disabled:opacity-50"
+                  title="Record Voice Note"
+                >
+                  <Mic size={12} />
+                </button>
+              )
+            )}
+          </div>
+        </div>
       </form>
+
+      {/* Footer copyright warning notice */}
+      <div className="text-[10px] text-slate-400 dark:text-slate-500 text-center select-none mt-1 leading-normal">
+        NovaMind can make mistakes. Consider checking important information.
+      </div>
     </div>
   );
 }

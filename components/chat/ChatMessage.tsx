@@ -3,13 +3,9 @@ import { Message } from '../../types/chat';
 import { useAuthStore } from '../../store/authStore';
 import { useChatStore } from '../../store/chatStore';
 import { formatTime } from '../../lib/utils';
-import { MoreVertical, Pencil, Trash2, X, Check, FileText, Sparkles, Zap, Bot, Image as ImageIcon, Copy, Mic, Volume2, VolumeX } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, X, Check, FileText, Sparkles, Zap, Bot, Image as ImageIcon, Copy, Mic, Volume2, VolumeX, ThumbsUp, ThumbsDown, RotateCw, CheckCheck } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
-
-
-
 
 interface ChatMessageProps {
   message: Message;
@@ -81,25 +77,17 @@ export function ChatMessage({ message }: ChatMessageProps) {
 
       window.speechSynthesis.cancel();
 
-      // Clean up markdown/custom labels for natural pronunciation
       const cleanText = (message.content || '')
         .replace(/🎤 \[Voice Message\]:/g, '')
         .replace(/\*\*\[Transcribed Voice\]:\*\*/g, '')
-        .replace(/[\*\_`#\-\[\]\(\)]/g, '') // remove markdown tags
+        .replace(/[\*\_`#\-\[\]\(\)]/g, '')
         .trim();
 
       if (!cleanText) return;
 
       const utterance = new SpeechSynthesisUtterance(cleanText);
-      
-      utterance.onend = () => {
-        setIsPlayingSpeech(false);
-      };
-
-      utterance.onerror = () => {
-        setIsPlayingSpeech(false);
-      };
-
+      utterance.onend = () => setIsPlayingSpeech(false);
+      utterance.onerror = () => setIsPlayingSpeech(false);
       setIsPlayingSpeech(true);
       window.speechSynthesis.speak(utterance);
     } else {
@@ -171,33 +159,37 @@ export function ChatMessage({ message }: ChatMessageProps) {
     }
   };
 
-  // Safe access for sender properties
   const senderName = message.sender?.name || 'Unknown User';
-  const senderInitial = senderName.charAt(0).toUpperCase();  return (
+
+  return (
     <div className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} mb-3 px-1`}>
       <div className={`group flex gap-2 sm:gap-3 max-w-[85%] ${isMe ? 'flex-row-reverse' : ''}`}>
+        
+        {/* Left Side Avatar: Robot Avatar for Assistant, none for User */}
         {!isMe && (
-          message.sender?.avatarUrl ? (
-            <img
-              src={message.sender.avatarUrl}
-              alt={senderName}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover shrink-0 border border-slate-200 dark:border-slate-800 shadow-sm"
-            />
-          ) : (
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900 dark:to-indigo-800 text-indigo-700 dark:text-indigo-300 flex items-center justify-center font-bold shrink-0 text-sm shadow-sm">
-              {senderInitial}
-            </div>
-          )
+          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#5f3be3] to-[#794ef7] text-white flex items-center justify-center font-bold shrink-0 border border-[#d2ceff]/30 shadow-glow-purple mt-0.5">
+            <svg viewBox="0 0 60 60" className="w-5 h-5">
+              {/* Headphones */}
+              <rect x="10" y="22" width="6" height="12" rx="3" fill="#ffffff" opacity="0.8" />
+              <rect x="44" y="22" width="6" height="12" rx="3" fill="#ffffff" opacity="0.8" />
+              
+              {/* Robot Head */}
+              <rect x="14" y="16" width="32" height="26" rx="8" fill="#ffffff" />
+              
+              {/* Screen Face */}
+              <rect x="18" y="20" width="24" height="16" rx="4" fill="#1e1b4b" />
+              
+              {/* Glowing Eyes */}
+              <circle cx="24" cy="28" r="2.5" fill="#3b82f6" />
+              <circle cx="36" cy="28" r="2.5" fill="#3b82f6" />
+            </svg>
+          </div>
         )}
 
         <div className={`flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'} min-w-0 max-w-full`}>
-          {!isMe && (
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 pl-1">
-              {senderName}
-            </span>
-          )}
-
           <div className={`flex items-center gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
+            
+            {/* Editing Form */}
             {isEditing ? (
               <div className="flex flex-col gap-2 bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 rounded-2xl p-3 shadow-lg w-full min-w-[250px] max-w-sm">
                 <textarea
@@ -205,31 +197,33 @@ export function ChatMessage({ message }: ChatMessageProps) {
                   value={editContent}
                   onChange={(e) => setEditContent(e.target.value)}
                   onKeyDown={handleEditKeyDown}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-[14px] sm:text-[15px] text-slate-900 dark:text-white outline-none resize-none min-h-[80px]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs text-slate-900 dark:text-white outline-none resize-none min-h-[80px]"
                 />
                 <div className="flex justify-end gap-2">
                   <button
                     onClick={() => { setIsEditing(false); setEditContent(message.content || ''); }}
-                    className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
+                    className="px-3 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-750 rounded-lg transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleEdit}
-                    className="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors cursor-pointer"
+                    className="px-3 py-1.5 text-[10px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors cursor-pointer"
                   >
                     Save
                   </button>
                 </div>
               </div>
             ) : (
+              /* Speech Bubble Container */
               <div
-                className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-[14px] sm:text-[15px] leading-relaxed shadow-sm min-w-[40px] max-w-full overflow-hidden break-words ${
+                className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-[18px] text-[13px] sm:text-[14px] leading-relaxed shadow-sm min-w-[40px] max-w-full overflow-hidden break-words ${
                   isMe
-                    ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-tr-none shadow-indigo-500/20'
-                    : 'bg-white dark:bg-slate-800/95 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-tl-none shadow-slate-200/40 dark:shadow-none'
+                    ? 'bg-[#ecebfd] dark:bg-[#1a1636] border border-[#dcd8f8]/60 dark:border-[#382b6b]/40 text-[#1b1248] dark:text-[#f1f0fb] rounded-tr-[4px]'
+                    : 'bg-white dark:bg-[#15122b]/55 border border-slate-200/50 dark:border-slate-800/40 text-slate-850 dark:text-slate-100 rounded-tl-[4px]'
                 }`}
               >
+                {/* Image Attachments */}
                 {message.type === 'image' && message.fileUrl ? (
                   <div className="flex flex-col gap-3 py-1">
                     <a
@@ -245,10 +239,11 @@ export function ChatMessage({ message }: ChatMessageProps) {
                       />
                     </a>
                     {message.content && message.content !== message.fileName && (
-                      <p className={`mt-1 font-medium leading-relaxed ${isMe ? 'text-white' : 'text-slate-700 dark:text-slate-300'}`}>{message.content}</p>
+                      <p className={`mt-1 font-medium leading-relaxed ${isMe ? 'text-[#1b1248] dark:text-[#f1f0fb]' : 'text-slate-700 dark:text-slate-350'}`}>{message.content}</p>
                     )}
                   </div>
-                ) : message.type === 'file' && message.fileUrl && (
+                ) : /* Voice Message Attachments */
+                message.type === 'file' && message.fileUrl && (
                   message.fileUrl.endsWith('.webm') ||
                   message.fileUrl.endsWith('.wav') ||
                   message.fileUrl.endsWith('.mp3') ||
@@ -258,9 +253,9 @@ export function ChatMessage({ message }: ChatMessageProps) {
                   message.fileName?.toLowerCase().endsWith('.wav')
                 ) ? (
                   <div className="flex flex-col gap-2 p-1 min-w-[240px] max-w-xs">
-                    <span className="text-[10px] uppercase font-bold tracking-wider opacity-75 flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                    <span className="text-[9px] uppercase font-bold tracking-wider opacity-75 flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                       <Mic size={11} className="text-indigo-500 animate-pulse shrink-0" />
-                      Voice Message
+                      Voice Note
                     </span>
                     <audio
                       src={message.fileUrl}
@@ -268,106 +263,131 @@ export function ChatMessage({ message }: ChatMessageProps) {
                       className="w-full h-8 outline-none dark:invert opacity-90"
                     />
                   </div>
-                ) : message.type === 'file' && message.fileUrl ? (
+                ) : /* Document Attachments */
+                message.type === 'file' && message.fileUrl ? (
                   <div className="flex items-center gap-3 p-2 rounded-lg bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 max-w-xs">
-                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50 shrink-0">
-                      <FileText size={20} />
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50 shrink-0">
+                      <FileText size={18} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm font-semibold truncate text-slate-800 dark:text-slate-200">
+                      <p className="text-xs font-semibold truncate text-slate-800 dark:text-slate-200">
                         {message.fileName || 'Attachment'}
                       </p>
                       <a
                         href={message.fileUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[10px] sm:text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline mt-0.5 block"
+                        className="text-[10px] text-indigo-600 dark:text-indigo-450 font-bold hover:underline mt-0.5 block"
                       >
                         Download File
                       </a>
                     </div>
                   </div>
                 ) : (
-
+                  /* Standard Markdown Content */
                   isMe ? (
                     <div className="whitespace-pre-wrap font-medium">{message.content}</div>
                   ) : (
-                    <div className="prose prose-slate dark:prose-invert max-w-full overflow-hidden prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:text-slate-50 prose-pre:border prose-pre:border-slate-700 prose-pre:rounded-xl prose-a:text-indigo-500 hover:prose-a:text-indigo-600 prose-sm prose-headings:font-semibold prose-strong:text-slate-900 dark:prose-strong:text-slate-100">
+                    <div className="prose prose-slate dark:prose-invert max-w-full overflow-hidden prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:text-slate-50 prose-pre:border prose-pre:border-slate-700 prose-pre:rounded-xl prose-a:text-indigo-500 hover:prose-a:text-indigo-600 prose-sm prose-headings:font-bold prose-strong:text-slate-900 dark:prose-strong:text-slate-100">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {formatContent(message.content)}
                       </ReactMarkdown>
                     </div>
                   )
                 )}
+
+                {/* Left Side: Assistant Action Buttons inside bubble */}
+                {!isMe && (
+                  <div className="flex items-center gap-4 mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/40 text-slate-400 dark:text-slate-500">
+                    <button
+                      onClick={handleCopy}
+                      className="hover:text-[#794ef7] dark:hover:text-[#a78bfa] transition-colors cursor-pointer"
+                      title={copied ? "Copied!" : "Copy message"}
+                    >
+                      <Copy size={13} />
+                    </button>
+                    <button
+                      className="hover:text-[#794ef7] dark:hover:text-[#a78bfa] transition-colors cursor-pointer"
+                      title="Like"
+                    >
+                      <ThumbsUp size={13} />
+                    </button>
+                    <button
+                      className="hover:text-[#794ef7] dark:hover:text-[#a78bfa] transition-colors cursor-pointer"
+                      title="Dislike"
+                    >
+                      <ThumbsDown size={13} />
+                    </button>
+                    <button
+                      className="hover:text-[#794ef7] dark:hover:text-[#a78bfa] transition-colors cursor-pointer"
+                      title="Regenerate"
+                    >
+                      <RotateCw size={13} />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Action Menu (Visible on Hover) */}
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0">
-              {message.content && message.type !== 'image' && (
-                <button
-                  onClick={handleSpeak}
-                  className={`p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer ${
-                    isPlayingSpeech 
-                      ? 'text-indigo-600 dark:text-indigo-400 animate-pulse' 
-                      : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-250'
-                  }`}
-                  title={isPlayingSpeech ? 'Stop reading' : 'Read aloud'}
-                >
-                  {isPlayingSpeech ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                </button>
-              )}
-
-              <button
-                onClick={handleCopy}
-                className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-250 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                title={copied ? 'Copied!' : 'Copy message'}
-              >
-                {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-              </button>
-
-
-              {isMe && (
+            {/* Edit / Delete Hover Action Menu (For User messages) */}
+            {isMe && !isEditing && (
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0 self-center">
+                {message.content && message.type !== 'image' && (
+                  <button
+                    onClick={handleSpeak}
+                    className={`p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer ${
+                      isPlayingSpeech 
+                        ? 'text-indigo-600 dark:text-indigo-400 animate-pulse' 
+                        : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                    title={isPlayingSpeech ? 'Stop reading' : 'Read aloud'}
+                  >
+                    {isPlayingSpeech ? <VolumeX size={13} /> : <Volume2 size={13} />}
+                  </button>
+                )}
+                
                 <div ref={menuRef} className="relative">
                   <button
                     onClick={() => setShowMenu(!showMenu)}
-                    className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-250 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    className="p-1 text-slate-400 hover:text-slate-650 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                     title="Message actions"
                   >
-                    <MoreVertical size={14} />
+                    <MoreVertical size={13} />
                   </button>
 
                   {showMenu && (
-                    <div className="absolute right-0 bottom-full mb-1.5 z-20 w-32 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl py-1">
+                    <div className="absolute right-0 bottom-full mb-1.5 z-20 w-28 bg-white dark:bg-[#121025] border border-slate-200 dark:border-[#2a2455]/50 rounded-xl shadow-2xl py-1">
                       <button
                         onClick={() => { setIsEditing(true); setShowMenu(false); }}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer"
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-[10px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#201c45]/50 cursor-pointer font-semibold"
                       >
-                        <Pencil size={12} className="text-indigo-500" />
+                        <Pencil size={11} className="text-indigo-500" />
                         Edit
                       </button>
                       <button
                         onClick={handleDelete}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-[10px] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 cursor-pointer font-semibold"
                       >
-                        <Trash2 size={12} />
+                        <Trash2 size={11} />
                         Delete
                       </button>
                     </div>
                   )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center gap-2 px-1 mt-0.5 opacity-70 text-[10px] sm:text-[11px]">
-            <span>{formatTime(message.createdAt)}</span>
-            {message.isEdited && <span className="italic text-slate-400">(edited)</span>}
+          {/* Under-bubble Metadata Row (Timestamp + Double Blue Ticks / Model Badge) */}
+          <div className={`flex items-center gap-1.5 px-1 mt-1 text-[9px] font-bold text-slate-400 dark:text-slate-500 ${isMe ? 'justify-end' : 'justify-start'}`}>
+            <span>{formatRoomDate(message.createdAt)}</span>
+            {message.isEdited && <span className="italic text-[9px] font-normal">(edited)</span>}
+            {isMe && <CheckCheck size={11} className="text-[#3b82f6]" />}
             {!isMe && message.model && (() => {
               const display = MODEL_DISPLAY[message.model];
               if (!display) return null;
               return (
-                <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full border text-[8px] font-bold leading-none ${display.bg} ${display.border} ${display.text}`}>
+                <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full border text-[7.5px] font-bold leading-none uppercase ${display.bg} ${display.border} ${display.text}`}>
                   {display.label}
                 </span>
               );
@@ -379,5 +399,13 @@ export function ChatMessage({ message }: ChatMessageProps) {
   );
 }
 
-
-
+// Format date helper inside this component scope
+const formatRoomDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  const displayMinutes = minutes < 10 ? '0' + minutes : minutes;
+  return `${displayHours}:${displayMinutes} ${ampm}`;
+};

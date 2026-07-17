@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
@@ -6,10 +8,12 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
   }
 
   body {
     transition: background-color 0.2s ease, border-color 0.2s ease, text-decoration-color 0.2s ease, fill 0.2s ease, stroke 0.2s ease;
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
   }
 
   /* Custom Premium Scrollbar for modern feel */
@@ -24,28 +28,99 @@
 
   /* Light mode scrollbar */
   ::-webkit-scrollbar-thumb {
-    background: rgba(100, 116, 139, 0.2);
+    background: rgba(100, 116, 139, 0.15);
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(100, 116, 139, 0.4);
+    background: rgba(100, 116, 139, 0.3);
   }
 
   /* Dark mode scrollbar */
   .dark ::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.2);
+    background: rgba(148, 163, 184, 0.15);
   }
 
   .dark ::-webkit-scrollbar-thumb:hover {
-    background: rgba(148, 163, 184, 0.4);
+    background: rgba(148, 163, 184, 0.3);
   }
 
   /* Premium Focus states */
   input:focus, textarea:focus, select:focus {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
   }
+}
+
+/* Custom styles for matching the screenshot design */
+
+/* Glowing effects */
+.shadow-glow-purple {
+  box-shadow: 0 0 20px 2px rgba(121, 78, 247, 0.35);
+}
+
+.shadow-glow-blue {
+  box-shadow: 0 0 20px 2px rgba(59, 130, 246, 0.25);
+}
+
+/* Mixed themes and gradients */
+.bg-dark-sidebar {
+  background: linear-gradient(180deg, #130b2c 0%, #090514 60%, #04020a 100%);
+}
+
+.pro-card-bg {
+  background: linear-gradient(135deg, #1d0f3d 0%, #2e1254 50%, #17072a 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.pro-card-bg::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(127, 86, 244, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Custom Double checkmark (ticks) styling */
+.double-check-blue {
+  color: #3b82f6;
+}
+
+/* Robot Mascot Animation */
+@keyframes floatRobot {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes floatCloud {
+  0% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.03);
+  }
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+}
+
+.animate-float-robot {
+  animation: floatRobot 4s ease-in-out infinite;
+}
+
+.animate-float-cloud {
+  animation: floatCloud 6s ease-in-out infinite;
 }
 
 /* ═══════════════════ RESPONSIVE CHAT LAYOUT OVERRIDES ═══════════════════ */
@@ -62,11 +137,10 @@
 @media (min-width: 1024px) {
   .chat-sidebar-responsive-visible {
     display: flex !important;
-    width: 20rem !important; /* w-80 */
+    width: 21rem !important; /* w-84 */
   }
   .chat-window-responsive-desktop {
     display: flex !important;
     flex: 1 !important;
   }
 }
-
