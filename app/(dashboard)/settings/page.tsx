@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ThemeToggle } from '../../../components/common/ThemeToggle';
-import { settingsService, UserSettings, ProviderStatus } from '../../../services/settings.service';
+import { settingsService, ProviderStatus } from '../../../services/settings.service';
+import { useTheme } from '../../../hooks/useTheme';
+import { useUiStore } from '../../../store/uiStore';
+import { useAuth } from '../../../hooks/useAuth';
 import {
   CheckCircle,
   Save,
@@ -20,55 +22,31 @@ import {
   HelpCircle,
   Bot,
   Image,
+  Loader2,
+  Sun,
+  Moon,
+  Laptop,
+  Paintbrush,
+  Menu,
 } from 'lucide-react';
 
-/* ─── Provider brand colours ─────────────────────────────────────────────── */
-const PROVIDER_STYLES: Record<string, {
-  ring: string; bg: string; activeBg: string; badge: string; dot: string; title: string;
-}> = {
-  gemini: {
-    ring:      'border-blue-500',
-    bg:        'from-blue-50/60 to-indigo-50/30 dark:from-blue-950/20 dark:to-slate-900',
-    activeBg:  'from-blue-50/60 to-indigo-50/30 dark:from-blue-950/20 dark:to-slate-900',
-    badge:     'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
-    dot:       'bg-blue-500',
-    title:     'text-blue-600 dark:text-blue-400',
-  },
-  groq: {
-    ring:      'border-emerald-500',
-    bg:        'from-emerald-50/60 to-teal-50/30 dark:from-emerald-950/20 dark:to-slate-900',
-    activeBg:  'from-emerald-50/60 to-teal-50/30 dark:from-emerald-950/20 dark:to-slate-900',
-    badge:     'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-    dot:       'bg-emerald-500',
-    title:     'text-emerald-600 dark:text-emerald-400',
-  },
-  huggingface: {
-    ring:      'border-yellow-500 border-2',
-    bg:        'from-yellow-50/60 to-amber-50/30 dark:from-yellow-950/20 dark:to-slate-900',
-    activeBg:  'from-yellow-50/60 to-amber-50/30 dark:from-yellow-950/20 dark:to-slate-900',
-    badge:     'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300',
-    dot:       'bg-yellow-500',
-    title:     'text-yellow-600 dark:text-yellow-400',
-  },
-  blackforest: {
-    ring:      'border-amber-500 border-2',
-    bg:        'from-amber-50/60 to-orange-50/30 dark:from-amber-950/20 dark:to-slate-900',
-    activeBg:  'from-amber-50/60 to-orange-50/30 dark:from-amber-950/20 dark:to-slate-900',
-    badge:     'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-    dot:       'bg-amber-500',
-    title:     'text-amber-600 dark:text-amber-400',
-  },
-};
-
 export default function SettingsPage() {
+  const { theme: currentTheme, setTheme } = useTheme();
+  const {
+    toggleSidebar,
+    accentColor: storeAccentColor,
+    fontSize: storeFontSize,
+    messageStyle: storeMessageStyle,
+    setAccentColor: setStoreAccentColor,
+    setFontSize: setStoreFontSize,
+    setMessageStyle: setStoreMessageStyle
+  } = useUiStore();
+  const { user } = useAuth();
   const [providers, setProviders]             = useState<ProviderStatus[]>([]);
   const [loading, setLoading]                 = useState(true);
   const [saving, setSaving]                   = useState(false);
   const [isSaved, setIsSaved]                 = useState(false);
   const [errorMessage, setErrorMessage]       = useState<string | null>(null);
-
-  // Which provider tab is expanded
-  const [activeProvider, setActiveProvider]   = useState<string>('gemini');
 
   // Form states (synced with DB)
   const [defaultModel, setDefaultModel]       = useState('gemini-3.1-flash-lite');
@@ -76,6 +54,19 @@ export default function SettingsPage() {
   const [maxTokens, setMaxTokens]             = useState(2048);
   const [notifications, setNotifications]     = useState(true);
   const [systemInstructions, setSystemInstructions] = useState('You are NovaMind AI, a helpful AI assistant.');
+  const [themeState, setThemeState]           = useState<'light' | 'dark' | 'system'>('system');
+
+  // Interactive Appearance / mock settings to match screenshot design
+  const [accentColor, setAccentColorState]    = useState(storeAccentColor);
+  const [fontSize, setFontSizeState]          = useState<'small' | 'medium' | 'large'>(storeFontSize);
+  const [messageStyle, setMessageStyleState]  = useState<'compact' | 'comfortable'>(storeMessageStyle);
+
+  // Sync with store on mount/change
+  useEffect(() => {
+    setAccentColorState(storeAccentColor);
+    setFontSizeState(storeFontSize);
+    setMessageStyleState(storeMessageStyle);
+  }, [storeAccentColor, storeFontSize, storeMessageStyle]);
 
   /* ── Load everything in parallel ────────────────────────────────────────── */
   useEffect(() => {
@@ -96,10 +87,7 @@ export default function SettingsPage() {
           setMaxTokens(settingsData.maxTokens ?? 2048);
           setNotifications(settingsData.notificationsEnabled ?? true);
           setSystemInstructions(settingsData.systemInstructions ?? 'You are NovaMind AI, a helpful AI assistant.');
-
-          // Expand the provider that owns the saved model
-          const ownerProvider = provData.find(p => p.models.some(mo => mo.id === m));
-          if (ownerProvider) setActiveProvider(ownerProvider.id);
+          setThemeState((settingsData.theme as 'light' | 'dark' | 'system') || 'system');
         }
       } catch (err: any) {
         console.error(err);
@@ -112,12 +100,26 @@ export default function SettingsPage() {
   }, []);
 
   /* ── Save ─────────────────────────────────────────────────────────────────*/
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     try {
       setSaving(true);
       setErrorMessage(null);
-      await settingsService.updateSettings({ defaultModel, temperature, maxTokens, notificationsEnabled: notifications, systemInstructions });
+      await settingsService.updateSettings({ 
+        defaultModel, 
+        temperature, 
+        maxTokens, 
+        notificationsEnabled: notifications, 
+        systemInstructions,
+        theme: themeState
+      });
+      
+      // Update the active UI theme context
+      setTheme(themeState);
+      setStoreAccentColor(accentColor);
+      setStoreFontSize(fontSize);
+      setStoreMessageStyle(messageStyle);
+      
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 4000);
     } catch {
@@ -127,387 +129,367 @@ export default function SettingsPage() {
     }
   };
 
-  /* ── Helpers ──────────────────────────────────────────────────────────────*/
-  const tempLabel = (v: number) => {
-    if (v < 0.3) return 'Highly Precise & Analytical';
-    if (v < 0.6) return 'Focused & Balanced';
-    if (v < 0.9) return 'Default — Creative & Conversational';
-    if (v < 1.3) return 'Highly Creative & Diverse';
-    return 'Exploratory & Experimental';
-  };
-
-  const isModelSelected = (id: string) => defaultModel === id;
-
   /* ── Loading skeleton ─────────────────────────────────────────────────────*/
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-8 bg-[#f8fafc] dark:bg-[#0b0a1a] min-h-screen">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-4 border-indigo-500/20 border-t-indigo-600 animate-spin" />
-          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 animate-pulse">
-            Loading your workspace settings…
+          <div className="w-12 h-12 rounded-full border-4 border-indigo-500/20 border-t-[#794ef7] animate-spin" />
+          <p className="text-sm font-semibold text-slate-505 dark:text-slate-400 animate-pulse">
+            Loading settings...
           </p>
         </div>
       </div>
     );
   }
 
-  /* ── Page ──────────────────────────────────────────────────────────────────*/
   return (
-    <div className="flex-1 overflow-y-auto p-4 sm:p-8 max-w-4xl mx-auto flex flex-col gap-8 select-none">
-
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-slate-900 to-indigo-950 dark:from-white dark:to-indigo-200 bg-clip-text text-transparent mb-2">
-          Settings
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Choose your AI provider, tune model parameters, and customise your workspace.
-        </p>
-      </div>
-
-      <form onSubmit={handleSave} className="flex flex-col gap-8">
-
-        {/* Toast — success */}
-        {isSaved && (
-          <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-2xl text-sm flex items-center gap-3 shadow-sm">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-              <CheckCircle size={18} className="text-emerald-500" />
-            </div>
-            <div className="flex-1">
-              <p className="font-bold">Preferences saved!</p>
-              <p className="text-xs opacity-80">Your AI assistant is now using <span className="font-semibold">{defaultModel}</span>.</p>
-            </div>
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#f8fafc] dark:bg-[#0b0a1a] select-none w-full animate-in fade-in duration-300">
+      
+      {/* Unified Top Header Bar (h-20) */}
+      <header className="h-20 border-b border-slate-200/50 dark:border-slate-800/40 bg-white dark:bg-[#0c0a1b] px-4 sm:px-6 flex items-center justify-between shrink-0 relative z-30 transition-colors duration-300">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Hamburger menu button on mobile */}
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className="p-2 -ml-2 hover:bg-slate-50 dark:hover:bg-[#1a1738]/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 rounded-lg transition-colors cursor-pointer lg:hidden flex items-center justify-center shrink-0"
+            title="Toggle Navigation Menu"
+          >
+            <Menu size={20} />
+          </button>
+          
+          <div className="flex flex-col text-left">
+            <h2 className="text-sm sm:text-base font-extrabold text-slate-850 dark:text-slate-100 leading-tight">
+              Settings
+            </h2>
+            <span className="text-[10px] text-slate-400 mt-0.5 leading-none">
+              Customize your AI assistant experience.
+            </span>
           </div>
-        )}
+        </div>
+        
+        {/* Right side: Actions / theme / profile */}
+        <div className="flex items-center gap-3 shrink-0">
+          {/* Save changes button */}
+          <button
+            onClick={() => handleSave()}
+            disabled={saving}
+            className="px-3.5 py-2 sm:px-4 sm:py-2.5 bg-[#794ef7] hover:bg-[#683ee3] disabled:bg-[#794ef7]/60 text-white font-semibold text-xs rounded-xl shadow-md shadow-[#794ef7]/10 flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-[0.98]"
+          >
+            {saving ? (
+              <Loader2 size={13} className="animate-spin" />
+            ) : (
+              <CheckCircle size={13} />
+            )}
+            <span>Save Changes</span>
+          </button>
 
-        {/* Toast — error */}
-        {errorMessage && (
-          <div className="p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/30 text-rose-600 dark:text-rose-400 rounded-2xl text-sm flex items-center gap-3 shadow-sm">
-            <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center shrink-0">
-              <Info size={18} className="text-rose-500" />
+          {/* Theme Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setThemeState(themeState === 'dark' ? 'light' : 'dark')}
+            className="p-2 text-slate-400 hover:text-slate-650 dark:hover:text-slate-200 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1a1738]/50 transition-colors cursor-pointer"
+            title="Toggle Light/Dark Theme"
+          >
+            {themeState === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+
+          {/* User Status Profile Badge */}
+          {user && (
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#f8fafc] dark:bg-[#15122b]/50 border border-slate-200/50 dark:border-slate-800/40 rounded-full select-none shrink-0">
+              <div className="w-6.5 h-6.5 rounded-full bg-gradient-to-tr from-[#5f3be3] to-[#794ef7] text-white flex items-center justify-center font-bold text-xs shrink-0 border border-[#d2ceff]/30">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex flex-col text-left min-w-[40px]">
+                <span className="text-[11px] font-bold text-slate-850 dark:text-white leading-none">
+                  {user.name}
+                </span>
+                <span className="text-[8px] text-emerald-500 font-bold flex items-center gap-0.5 mt-0.5 leading-none">
+                  <span className="w-1 h-1 rounded-full bg-emerald-500 inline-block animate-pulse" />
+                  Online
+                </span>
+              </div>
             </div>
-            <p className="font-semibold">{errorMessage}</p>
-          </div>
-        )}
+          )}
+        </div>
+      </header>
 
-        {/* ── SECTION 1: AI Provider & Model ─────────────────────────────── */}
-        <div className="p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm flex flex-col gap-6 transition-all duration-300 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700">
-
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Cpu className="text-indigo-600 dark:text-indigo-400" size={20} />
-              <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">AI Provider &amp; Model</h3>
+      {/* Main Settings Form Scroll Area */}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 w-full">
+        <form onSubmit={handleSave} className="flex flex-col gap-6 w-full pb-10 max-w-7xl mx-auto">
+          
+          {/* Toast Alerts inside Settings area */}
+          {isSaved && (
+            <div className="p-4 bg-emerald-50/90 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-450 rounded-xl text-sm flex items-center gap-3 shadow-sm transition-all animate-in fade-in slide-in-from-top-2 duration-200">
+              <CheckCircle size={18} className="text-emerald-500 shrink-0" />
+              <div>
+                <span className="font-bold">Settings saved successfully!</span> Your AI model preferences are updated.
+              </div>
             </div>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Select your provider, then pick the exact model. API key status is shown in real time.
-            </p>
-          </div>
+          )}
+          {errorMessage && (
+            <div className="p-4 bg-rose-50/90 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/30 text-rose-700 dark:text-rose-455 rounded-xl text-sm flex items-center gap-3 shadow-sm transition-all animate-in fade-in slide-in-from-top-2 duration-200">
+              <Info size={18} className="text-rose-500 shrink-0" />
+              <div>{errorMessage}</div>
+            </div>
+          )}
 
-          {/* Provider tabs */}
-          <div className="flex flex-col gap-3">
-            {providers.map((provider) => {
-              const styles   = PROVIDER_STYLES[provider.id] || PROVIDER_STYLES.gemini;
-              const isActive = activeProvider === provider.id;
-              const hasModel = provider.models.some(m => isModelSelected(m.id));
+          {/* ── SECTION 1: AI Model Cards ───────────────────────────────── */}
+          <div className="bg-white dark:bg-[#12112a] border border-[#e2e8f0] dark:border-[#201e3d] rounded-2xl p-5 sm:p-6 flex flex-col gap-6 shadow-[0_2px_8px_rgba(0,0,0,0.015)]">
+            <div className="flex items-start gap-4">
+              <div className="w-9 h-9 rounded-xl bg-[#f3f0ff] dark:bg-[#231d45] text-[#794ef7] dark:text-[#a78bfa] flex items-center justify-center shrink-0">
+                <Sparkles size={16} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-850 dark:text-slate-100 text-sm sm:text-base">AI Model</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Choose the AI model that best fits your needs.
+                </p>
+              </div>
+            </div>
 
-              return (
-                <div key={provider.id} className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 transition-all duration-300">
+            {/* Dynamic cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full">
+              {providers.flatMap(provider => 
+                provider.models.map((model) => {
+                  const active = defaultModel === model.id;
+                  
+                  // Get provider icon
+                  let modelIcon = (
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 text-slate-500" fill="currentColor">
+                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  );
+                  if (provider.id === 'gemini') {
+                    modelIcon = (
+                      <svg viewBox="0 0 24 24" className={`w-5.5 h-5.5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-blue-500'}`} fill="currentColor">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    );
+                  } else if (provider.id === 'groq') {
+                    modelIcon = <Zap className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-emerald-500'}`} />;
+                  } else if (provider.id === 'huggingface') {
+                    modelIcon = <Bot className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-yellow-550'}`} />;
+                  } else if (provider.id === 'blackforest') {
+                    modelIcon = <Image className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-amber-500'}`} />;
+                  }
 
-                  {/* Provider header / tab */}
-                  <button
-                    type="button"
-                    onClick={() => setActiveProvider(isActive ? '' : provider.id)}
-                    className={`flex items-center justify-between w-full px-5 py-4 transition-all duration-200 ${
-                      isActive
-                        ? `bg-gradient-to-r ${styles.bg}`
-                        : 'bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100/70 dark:hover:bg-slate-800/40'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      {/* Status dot */}
-                      <div className="relative flex shrink-0">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                          provider.configured
-                            ? `bg-gradient-to-br ${styles.bg} ${isActive ? styles.ring : 'border border-slate-200 dark:border-slate-700'}`
-                            : 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700'
-                        }`}>
-                          {provider.id === 'gemini' && (
-                            <svg viewBox="0 0 24 24" className={`w-5 h-5 ${provider.configured ? styles.title : 'text-slate-400'}`} fill="currentColor">
-                              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          )}
-                          {provider.id === 'groq' && (
-                            <Zap className={`w-5 h-5 ${provider.configured ? styles.title : 'text-slate-400'}`} />
-                          )}
-                          {provider.id === 'huggingface' && (
-                            <Bot className={`w-5 h-5 ${provider.configured ? styles.title : 'text-slate-400'}`} />
-                          )}
-                          {provider.id === 'blackforest' && (
-                            <Image className={`w-5 h-5 ${provider.configured ? styles.title : 'text-slate-400'}`} />
-                          )}
+                  return (
+                    <div
+                      key={model.id}
+                      onClick={() => provider.configured && setDefaultModel(model.id)}
+                      className={`flex flex-col justify-between p-4 rounded-xl border-2 transition-all relative min-h-[145px] select-none ${
+                        active
+                          ? 'border-[#794ef7] bg-[#fbfaff] dark:bg-[#181535] shadow-[0_4px_12px_rgba(121,78,247,0.06)]'
+                          : !provider.configured
+                            ? 'border-slate-200 dark:border-slate-800 opacity-40 cursor-not-allowed bg-slate-50 dark:bg-slate-900/10'
+                            : 'border-[#e2e8f0] dark:border-[#201e3d] bg-white dark:bg-[#12112a] hover:border-slate-350 dark:hover:border-slate-700 cursor-pointer hover:scale-[1.005]'
+                      }`}
+                    >
+                      {/* Card Top: Logo and Select Radio Button */}
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="p-1 rounded-lg">
+                          {modelIcon}
                         </div>
-                        {/* configured dot */}
-                        <div className={`absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${provider.configured ? styles.dot : 'bg-slate-300 dark:bg-slate-600'}`} />
+                        
+                        {active ? (
+                          <div className="w-5 h-5 rounded-full border-2 border-[#794ef7] flex items-center justify-center bg-white dark:bg-[#12112a] shrink-0">
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#794ef7]" />
+                          </div>
+                        ) : !provider.configured ? (
+                          <div className="text-[8px] font-black uppercase text-slate-450 dark:text-slate-500 border border-slate-200 dark:border-slate-800 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-900 shrink-0">
+                            Locked
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-650 shrink-0" />
+                        )}
                       </div>
 
-                      <div className="text-left">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-900 dark:text-white text-sm">{provider.name}</span>
-                          {provider.configured ? (
-                            <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${styles.badge}`}>
-                              <ShieldCheck size={10} /> API Key Active
+                      {/* Card Bottom: Name, Badge, and Description */}
+                      <div className="mt-4">
+                        <div className="flex flex-col gap-1">
+                          <span className={`font-bold text-xs sm:text-sm ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-slate-800 dark:text-slate-200'}`}>
+                            {model.name}
+                          </span>
+                          
+                          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${
+                              active
+                                ? 'text-[#794ef7] bg-[#f3f0ff] dark:bg-[#231d45]'
+                                : 'text-slate-500 bg-slate-100 dark:bg-slate-800'
+                            }`}>
+                              {model.badge}
                             </span>
-                          ) : (
-                            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                              <ShieldX size={10} /> Key Not Configured
-                            </span>
-                          )}
-                          {hasModel && (
-                            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">
-                              <Check size={10} /> Selected
-                            </span>
-                          )}
+                            
+                            {model.id === 'gemini-3.1-flash-lite' && (
+                              <span className="text-[8.5px] font-black text-[#794ef7] bg-[#f3f0ff] dark:bg-[#231d45] px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                                Recommended
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          {provider.models.length} model{provider.models.length > 1 ? 's' : ''} available
+                        
+                        <p className="text-[11px] text-slate-400 mt-2.5 leading-snug">
+                          {model.description}
                         </p>
                       </div>
                     </div>
-
-                    <ChevronRight
-                      size={18}
-                      className={`text-slate-400 transition-transform duration-300 ${isActive ? 'rotate-90' : ''}`}
-                    />
-                  </button>
-
-                  {/* Model list — accordion body */}
-                  {isActive && (
-                    <div className="px-4 pb-4 pt-2 bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2">
-                      {!provider.configured && (
-                        <div className="mb-2 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 text-amber-700 dark:text-amber-400 text-xs flex items-center gap-2">
-                          <ShieldX size={14} className="shrink-0" />
-                          <span>
-                            <strong>API key not set.</strong> Add <code className="bg-amber-100 dark:bg-amber-800/40 px-1 rounded">
-                              {provider.id === 'gemini' ? 'GEMINI_API_KEY' : 
-                                provider.id === 'groq' ? 'GROQ_API_KEY' :
-                                provider.id === 'huggingface' ? 'HUGGINGFACE_API_KEY' : 'BFL_API_KEY'}
-                            </code> to your <code className="bg-amber-100 dark:bg-amber-800/40 px-1 rounded">backend/.env</code> file to activate this provider.
-                          </span>
-                        </div>
-                      )}
-
-                      {provider.models.map((model) => {
-                        const selected  = isModelSelected(model.id);
-                        const s         = styles;
-                        return (
-                          <div
-                            key={model.id}
-                            onClick={() => provider.configured && setDefaultModel(model.id)}
-                            className={`flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all duration-200 ${
-                              selected
-                                ? `bg-gradient-to-r ${s.activeBg} ${s.ring} shadow-sm`
-                                : provider.configured
-                                  ? 'bg-white dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer'
-                                  : 'bg-slate-100/50 dark:bg-slate-800/20 border-slate-200 dark:border-slate-800 opacity-50 cursor-not-allowed'
-                            }`}
-                          >
-                            {/* Radio */}
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                              selected
-                                ? `${s.ring} bg-white dark:bg-slate-900`
-                                : 'border-slate-300 dark:border-slate-600'
-                            }`}>
-                              {selected && <div className={`w-2.5 h-2.5 rounded-full ${s.dot}`} />}
-                            </div>
-
-                            {/* Info */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className={`font-bold text-sm ${selected ? styles.title : 'text-slate-900 dark:text-white'}`}>
-                                  {model.name}
-                                </span>
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${selected ? s.badge : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'}`}>
-                                  {model.badge}
-                                </span>
-                              </div>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                                {model.description}
-                              </p>
-                            </div>
-
-                            {selected && (
-                              <div className={`w-6 h-6 rounded-full ${s.dot} text-white flex items-center justify-center shrink-0`}>
-                                <Check size={13} strokeWidth={3} />
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ── SECTION 2: AI Hyperparameters ───────────────────────────────── */}
-        <div className="p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm flex flex-col gap-6 transition-all duration-300 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700">
-
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Sliders className="text-indigo-600 dark:text-indigo-400" size={20} />
-              <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">AI Hyperparameters</h3>
+                  );
+                })
+              )}
             </div>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Fine-tune creativity, response length, and bot personality.
-            </p>
           </div>
 
-          <div className="flex flex-col gap-6">
-
-            {/* Temperature */}
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  Temperature
-                  <span className="text-slate-400" title="Higher = more creative, lower = more deterministic">
-                    <HelpCircle size={13} />
-                  </span>
-                </span>
-                <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-1 rounded-lg tabular-nums">
-                  {temperature.toFixed(1)}
-                </span>
+          {/* ── SECTION 2: Appearance ───────────────────────────────────── */}
+          <div className="bg-white dark:bg-[#12112a] border border-[#e2e8f0] dark:border-[#201e3d] rounded-2xl p-5 sm:p-6 flex flex-col gap-6 shadow-[0_2px_8px_rgba(0,0,0,0.015)]">
+            <div className="flex items-start gap-4">
+              <div className="w-9 h-9 rounded-xl bg-[#f3f0ff] dark:bg-[#231d45] text-[#794ef7] dark:text-[#a78bfa] flex items-center justify-center shrink-0">
+                <Paintbrush size={16} />
               </div>
-
-              {/* Custom track with coloured fill */}
-              <div className="relative h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-100"
-                  style={{ width: `${(temperature / 2) * 100}%` }}
-                />
-              </div>
-              <input
-                type="range" min="0.0" max="2.0" step="0.1"
-                value={temperature}
-                onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                className="w-full h-2 opacity-0 absolute cursor-pointer"
-                style={{ marginTop: '-8px' }}
-              />
-
-              {/* Visible slider on top */}
-              <input
-                type="range" min="0.0" max="2.0" step="0.1"
-                value={temperature}
-                onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                className="w-full h-2 bg-transparent rounded-lg appearance-none cursor-pointer accent-indigo-600 -mt-4"
-              />
-
-              <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                <Activity size={11} />
-                Mode: <span className="font-semibold text-slate-500 dark:text-slate-300 ml-0.5">{tempLabel(temperature)}</span>
-              </span>
-            </div>
-
-            {/* Max Tokens */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                Max Output Tokens
-                <span className="text-slate-400" title="Limits the length of each AI reply.">
-                  <HelpCircle size={13} />
-                </span>
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="number" min="256" max="8192" step="256"
-                  value={maxTokens}
-                  onChange={(e) => setMaxTokens(parseInt(e.target.value) || 2048)}
-                  className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900 dark:text-white font-mono w-32"
-                />
-                <span className="text-xs text-slate-400">≈ {Math.round(maxTokens * 0.75)} words · typical range 1 024 – 4 096</span>
-              </div>
-            </div>
-
-            {/* System Instructions */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                System Instructions
-              </label>
-              <textarea
-                rows={3}
-                value={systemInstructions}
-                onChange={(e) => setSystemInstructions(e.target.value)}
-                placeholder="Instruct the AI bot on how it should act…"
-                className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900 dark:text-white resize-y"
-              />
-              <p className="text-[10px] text-slate-400">
-                Prepended to conversation context to direct personality, tone, and rules for the bot.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* ── SECTION 3: Theme & Notifications ────────────────────────────── */}
-        <div className="p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm flex flex-col gap-6 transition-all duration-300 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700">
-
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="text-indigo-600 dark:text-indigo-400" size={20} />
-              <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">Theme &amp; UI Preferences</h3>
-            </div>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Visual styling and desktop notification settings.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800/80 rounded-2xl">
               <div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-white">Active Theme</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Light, dark, or follow system preference.</p>
+                <h3 className="font-bold text-slate-800 dark:text-slate-105 text-sm sm:text-base">Appearance</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Personalize the look and feel.
+                </p>
               </div>
-              <ThemeToggle />
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800/80 rounded-2xl">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
-                  <Volume2 size={20} />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">Sound &amp; Desktop Notifications</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Play alerts when messages arrive.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 lg:gap-8 items-start w-full">
+              
+              {/* Theme (Col Span 4) */}
+              <div className="lg:col-span-4 md:col-span-6 col-span-12 flex flex-col gap-3 w-full">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-355">Theme</span>
+                <div className="flex bg-[#f8fafc] dark:bg-[#0b0a1a] border border-[#e2e8f0] dark:border-[#201e3d] rounded-xl p-1 gap-1 w-full">
+                  {[
+                    { id: 'light', name: 'Light', icon: <Sun size={13} /> },
+                    { id: 'dark', name: 'Dark', icon: <Moon size={13} /> },
+                    { id: 'system', name: 'System', icon: <Laptop size={13} /> }
+                  ].map((t) => {
+                    const active = themeState === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setThemeState(t.id as any)}
+                        className={`flex-1 px-3 py-2 flex items-center justify-center gap-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                          active
+                            ? 'bg-white dark:bg-[#12112a] border border-[#e2e8f0] dark:border-[#201e3d] text-[#794ef7] dark:text-[#a78bfa] shadow-sm'
+                            : 'text-slate-500 dark:text-slate-455 hover:text-slate-750 dark:hover:text-slate-200'
+                        }`}
+                      >
+                        {t.icon}
+                        <span>{t.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-              <input
-                type="checkbox" checked={notifications}
-                onChange={(e) => setNotifications(e.target.checked)}
-                className="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500 h-5 w-5 cursor-pointer accent-indigo-600"
-              />
+
+              {/* Accent Color (Col Span 4) */}
+              <div className="lg:col-span-4 md:col-span-6 col-span-12 flex flex-col gap-3 w-full">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-355">Accent Color</span>
+                <div className="flex flex-wrap items-center gap-3 py-1 w-full">
+                  {[
+                    { id: 'purple', hex: '#794ef7', class: 'bg-[#794ef7]' },
+                    { id: 'blue', hex: '#3b82f6', class: 'bg-[#3b82f6]' },
+                    { id: 'teal', hex: '#14b8a6', class: 'bg-[#14b8a6]' },
+                    { id: 'green', hex: '#22c55e', class: 'bg-[#22c55e]' },
+                    { id: 'orange', hex: '#f97316', class: 'bg-[#f97316]' },
+                    { id: 'pink', hex: '#ec4899', class: 'bg-[#ec4899]' }
+                  ].map((color) => {
+                    const active = accentColor === color.id;
+                    return (
+                      <button
+                        key={color.id}
+                        type="button"
+                        onClick={() => setAccentColorState(color.id)}
+                        className={`w-6.5 h-6.5 rounded-full cursor-pointer transition-all hover:scale-105 flex items-center justify-center ${color.class} ${
+                          active
+                            ? 'ring-2 ring-offset-2 ring-[#794ef7] dark:ring-offset-[#12112a]'
+                            : ''
+                        }`}
+                      >
+                        {active && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Font Size & Message Style (Col Span 4) */}
+              <div className="lg:col-span-4 md:col-span-12 col-span-12 flex flex-col gap-4 w-full">
+                
+                {/* Font Size */}
+                <div className="flex flex-col gap-3 w-full">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-355">Font Size</span>
+                  <div className="flex bg-[#f8fafc] dark:bg-[#0b0a1a] border border-[#e2e8f0] dark:border-[#201e3d] rounded-xl p-1 gap-1 w-full">
+                    {[
+                      { id: 'small', name: 'Small' },
+                      { id: 'medium', name: 'Medium' },
+                      { id: 'large', name: 'Large' }
+                    ].map((size) => {
+                      const active = fontSize === size.id;
+                      return (
+                        <button
+                          key={size.id}
+                          type="button"
+                          onClick={() => setFontSizeState(size.id as any)}
+                          className={`flex-1 px-3 py-2 flex items-center justify-center rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                            active
+                              ? 'bg-white dark:bg-[#12112a] border border-[#e2e8f0] dark:border-[#201e3d] text-[#794ef7] dark:text-[#a78bfa] shadow-sm'
+                              : 'text-slate-500 dark:text-slate-455 hover:text-slate-750 dark:hover:text-slate-200'
+                          }`}
+                        >
+                          {size.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Message Style */}
+                <div className="flex flex-col gap-3 w-full">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-355">Message Style</span>
+                  <div className="flex bg-[#f8fafc] dark:bg-[#0b0a1a] border border-[#e2e8f0] dark:border-[#201e3d] rounded-xl p-1 gap-1 w-full">
+                    {[
+                      { id: 'compact', name: 'Compact' },
+                      { id: 'comfortable', name: 'Comfortable' }
+                    ].map((style) => {
+                      const active = messageStyle === style.id;
+                      return (
+                        <button
+                          key={style.id}
+                          type="button"
+                          onClick={() => setMessageStyleState(style.id as any)}
+                          className={`flex-1 px-3 py-2 flex items-center justify-center rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                            active
+                              ? 'bg-white dark:bg-[#12112a] border border-[#e2e8f0] dark:border-[#201e3d] text-[#794ef7] dark:text-[#a78bfa] shadow-sm'
+                              : 'text-slate-500 dark:text-slate-455 hover:text-slate-755 dark:hover:text-slate-200'
+                          }`}
+                        >
+                          {style.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Save button */}
-        <button
-          type="submit"
-          disabled={saving}
-          className={`py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all flex items-center justify-center gap-2 ${saving ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
-        >
-          {saving ? (
-            <>
-              <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin" />
-              <span>Saving Preferences…</span>
-            </>
-          ) : (
-            <>
-              <Save size={18} />
-              <span>Save &amp; Apply Settings</span>
-            </>
-          )}
-        </button>
-      </form>
+          {/* Footer Secure Info Alert */}
+          <div className="flex items-center justify-center gap-2 py-4 text-slate-400 select-none">
+            <svg className="w-4 h-4 text-slate-450 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <span className="text-[10px] sm:text-xs font-semibold text-center leading-normal">Your data and preferences are secure and encrypted.</span>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

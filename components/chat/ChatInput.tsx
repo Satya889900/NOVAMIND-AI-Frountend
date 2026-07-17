@@ -88,6 +88,7 @@ export function ChatInput({ roomId, isNewRoom, onSendMessage, onTyping }: ChatIn
   const [models, setModels] = useState<ModelItem[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [showModelDropdown, setShowModelDropdown] = useState(false);
+  const [defaultModelSetting, setDefaultModelSetting] = useState<string>('gemini-3.1-flash-lite');
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -119,7 +120,9 @@ export function ChatInput({ roomId, isNewRoom, onSendMessage, onTyping }: ChatIn
         });
 
         setModels(allModels);
-        setSelectedModel(settings.defaultModel);
+        const dfModel = settings.defaultModel || 'gemini-3.1-flash-lite';
+        setDefaultModelSetting(dfModel);
+        setSelectedModel(dfModel);
       } catch (err) {
         console.error('Failed to load AI models:', err);
       }
@@ -128,12 +131,12 @@ export function ChatInput({ roomId, isNewRoom, onSendMessage, onTyping }: ChatIn
     fetchModels();
   }, []);
 
-  // Reset selected model to 'gemini-3.1-flash-lite' for new rooms
+  // Reset selected model to default settings model for new rooms
   useEffect(() => {
     if (isNewRoom) {
-      setSelectedModel('gemini-3.1-flash-lite');
+      setSelectedModel(defaultModelSetting);
     }
-  }, [roomId, isNewRoom]);
+  }, [roomId, isNewRoom, defaultModelSetting]);
 
   // Close dropdown on outside click
   useEffect(() => {

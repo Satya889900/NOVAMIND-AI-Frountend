@@ -3,6 +3,9 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useChatStore } from '../../../store/chatStore';
+import { useUiStore } from '../../../store/uiStore';
+import { useTheme } from '../../../hooks/useTheme';
+import { useAuth } from '../../../hooks/useAuth';
 import { documentService } from '../../../services/document.service';
 import { Document } from '../../../types/document';
 import {
@@ -21,6 +24,9 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Menu,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -327,6 +333,9 @@ function FileCard({ doc, onStar, onDelete, onChat, isDeleting }: {
 export default function DocumentsPage() {
   const router = useRouter();
   const { rooms, createRoom, selectRoom } = useChatStore();
+  const { toggleSidebar } = useUiStore();
+  const { theme, setTheme } = useTheme();
+  const { user } = useAuth();
 
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -499,22 +508,74 @@ export default function DocumentsPage() {
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="h-[calc(100vh-4rem)] overflow-y-auto p-6 lg:p-8 bg-slate-50 dark:bg-slate-950">
-      <div className="max-w-5xl mx-auto space-y-8">
-
-        {/* Page Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-            Document Library
-          </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Upload PDF, DOCX, or TXT files and chat with them using AI-powered RAG.
-            <span className="ml-2 inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
-              <Star size={12} className="fill-current" />
-              Star a document to protect it from being deleted when you remove a chat.
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-955 select-none w-full animate-in fade-in duration-300">
+      
+      {/* Unified Top Header Bar (h-20) */}
+      <header className="h-20 border-b border-slate-200/50 dark:border-slate-800/40 bg-white dark:bg-[#0c0a1b] px-4 sm:px-6 flex items-center justify-between shrink-0 relative z-30 transition-colors duration-300">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Hamburger menu button on mobile */}
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className="p-2 -ml-2 hover:bg-slate-50 dark:hover:bg-[#1a1738]/50 text-slate-505 hover:text-slate-800 dark:hover:text-slate-200 rounded-lg transition-colors cursor-pointer lg:hidden flex items-center justify-center shrink-0"
+            title="Toggle Navigation Menu"
+          >
+            <Menu size={20} />
+          </button>
+          
+          <div className="flex flex-col text-left">
+            <h2 className="text-sm sm:text-base font-extrabold text-slate-850 dark:text-slate-100 leading-tight">
+              Document Library
+            </h2>
+            <span className="text-[10px] text-slate-400 mt-0.5 leading-none">
+              Upload files and chat with them using AI-powered RAG.
             </span>
-          </p>
+          </div>
         </div>
+        
+        {/* Right side: Actions / theme / profile */}
+        <div className="flex items-center gap-3 shrink-0">
+          {/* Theme Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="p-2 text-slate-450 hover:text-slate-650 dark:hover:text-slate-200 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1a1738]/50 transition-colors cursor-pointer"
+            title="Toggle Light/Dark Theme"
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+
+          {/* User Status Profile Badge */}
+          {user && (
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#f8fafc] dark:bg-[#15122b]/50 border border-slate-200/50 dark:border-slate-800/40 rounded-full select-none shrink-0">
+              <div className="w-6.5 h-6.5 rounded-full bg-gradient-to-tr from-[#5f3be3] to-[#794ef7] text-white flex items-center justify-center font-bold text-xs shrink-0 border border-[#d2ceff]/30">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex flex-col text-left min-w-[40px]">
+                <span className="text-[11px] font-bold text-slate-850 dark:text-white leading-none">
+                  {user.name}
+                </span>
+                <span className="text-[8px] text-emerald-500 font-bold flex items-center gap-0.5 mt-0.5 leading-none">
+                  <span className="w-1 h-1 rounded-full bg-emerald-500 inline-block animate-pulse" />
+                  Online
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Main Content Scroll Area */}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 w-full">
+        <div className="max-w-5xl mx-auto space-y-8 pb-10">
+          {/* Description Banner */}
+          <div className="p-4 bg-white dark:bg-[#12112a] border border-[#e2e8f0] dark:border-[#201e3d] rounded-2xl shadow-sm text-xs text-slate-500 dark:text-slate-400">
+            Upload PDF, DOCX, or TXT files to train your assistant.
+            <span className="ml-2 inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
+              <Star size={12} className="fill-current animate-pulse" />
+              Star a document to protect it from being deleted when you remove a chat room.
+            </span>
+          </div>
 
         {/* Global Error */}
         {globalError && (
@@ -759,5 +820,6 @@ export default function DocumentsPage() {
 
       </div>
     </div>
-  );
+  </div>
+);
 }

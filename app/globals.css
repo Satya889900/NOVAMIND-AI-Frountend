@@ -144,3 +144,104 @@
     flex: 1 !important;
   }
 }
+
+/* ═══════════════════ GLOBAL APPEARANCE THEME VARIABLES ═══════════════════ */
+
+/* Accent Color Mapping */
+:root[data-accent="purple"] {
+  --primary-color: 121, 78, 247; /* #794ef7 */
+  --primary-hover: 104, 62, 227; /* #683ee3 */
+}
+:root[data-accent="blue"] {
+  --primary-color: 59, 130, 246; /* #3b82f6 */
+  --primary-hover: 37, 99, 235; /* #2563eb */
+}
+:root[data-accent="teal"] {
+  --primary-color: 20, 184, 166; /* #14b8a6 */
+  --primary-hover: 13, 148, 136; /* #0d9488 */
+}
+:root[data-accent="green"] {
+  --primary-color: 34, 197, 94; /* #22c55e */
+  --primary-hover: 22, 163, 74; /* #16a34a */
+}
+:root[data-accent="orange"] {
+  --primary-color: 249, 115, 22; /* #f97316 */
+  --primary-hover: 234, 88, 12; /* #ea580c */
+}
+:root[data-accent="pink"] {
+  --primary-color: 236, 72, 153; /* #ec4899 */
+  --primary-hover: 219, 39, 119; /* #db2677 */
+}
+
+/* Intercept Tailwind utility classes to use CSS Accent color variables */
+[class*="bg-[#794ef7]"] {
+  background-color: rgb(var(--primary-color)) !important;
+}
+[class*="disabled:bg-[#794ef7]/"] {
+  background-color: rgba(var(--primary-color), 0.6) !important;
+}
+[class*="hover:bg-[#683ee3]"]:hover {
+  background-color: rgb(var(--primary-hover)) !important;
+}
+[class*="text-[#794ef7]"] {
+  color: rgb(var(--primary-color)) !important;
+}
+[class*="border-[#794ef7]"] {
+  border-color: rgb(var(--primary-color)) !important;
+}
+[class*="ring-[#794ef7]"] {
+  --tw-ring-color: rgb(var(--primary-color)) !important;
+  accent-color: rgb(var(--primary-color)) !important;
+}
+[class*="accent-[#794ef7]"] {
+  accent-color: rgb(var(--primary-color)) !important;
+}
+[class*="from-[#4d3df2]"] {
+  --tw-gradient-from: rgb(var(--primary-hover)) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(var(--primary-hover), 0));
+}
+[class*="to-[#794ef7]"] {
+  --tw-gradient-to: rgb(var(--primary-color)) !important;
+}
+[class*="shadow-[#794ef7]"] {
+  --tw-shadow-color: rgba(var(--primary-color), 0.15) !important;
+}
+.shadow-glow-purple {
+  box-shadow: 0 0 20px 2px rgba(var(--primary-color), 0.35) !important;
+}
+
+/* Font Size Scaling */
+:root[data-font-size="small"] {
+  font-size: 0.92rem !important;
+}
+:root[data-font-size="medium"] {
+  font-size: 1rem !important;
+}
+:root[data-font-size="large"] {
+  font-size: 1.08rem !important;
+}
+
+/* Message Style: Compact vs Comfortable */
+:root[data-message-style="compact"] {
+  --message-gap: 0.5rem; /* gap-2 */
+  --message-padding-y: 0.625rem; /* py-2.5 */
+  --message-padding-x: 1rem; /* px-4 */
+}
+:root[data-message-style="comfortable"] {
+  --message-gap: 1.25rem; /* gap-5 */
+  --message-padding-y: 0.95rem; /* py-3.5 */
+  --message-padding-x: 1.35rem; /* px-5.5 */
+}
+
+/* Override Message list gaps dynamically */
+[class*="flex-1 overflow-y-auto p-5 flex flex-col gap-4"] {
+  gap: var(--message-gap, 1rem) !important;
+}
+
+/* Override Chat message bubble paddings dynamically */
+[class*="rounded-[18px]"] {
+  padding-top: var(--message-padding-y) !important;
+  padding-bottom: var(--message-padding-y) !important;
+  padding-left: var(--message-padding-x) !important;
+  padding-right: var(--message-padding-x) !important;
+}

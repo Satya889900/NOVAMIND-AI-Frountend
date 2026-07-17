@@ -24,7 +24,7 @@ export function ThemeProviderContext({
 }: {
   children: React.ReactNode;
 }) {
-  const { theme, setTheme } = useUiStore();
+  const { theme, setTheme, accentColor, fontSize, messageStyle } = useUiStore();
 
   const resolvedTheme =
     theme === 'system'
@@ -66,6 +66,24 @@ export function ThemeProviderContext({
       media.removeEventListener('change', applyTheme);
     };
   }, [theme]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      document.documentElement.setAttribute('data-accent', accentColor);
+    }
+  }, [accentColor]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      document.documentElement.setAttribute('data-font-size', fontSize);
+    }
+  }, [fontSize]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      document.documentElement.setAttribute('data-message-style', messageStyle);
+    }
+  }, [messageStyle]);
 
   const value = useMemo(
     () => ({
