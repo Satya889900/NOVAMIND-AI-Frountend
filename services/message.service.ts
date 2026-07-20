@@ -111,4 +111,85 @@ export const messageService = {
     );
     return res.data;
   },
+
+  /**
+   * SSE Stream POST /conversations/:roomId/messages/stream
+   */
+  streamChatMessage: async (
+    roomId: string,
+    payload: ChatMessagePayload,
+    onToken: (token: string) => void,
+    onDone: (aiMsg: ChatMessageResponse) => void,
+    onError: (err: any) => void
+  ): Promise<void> => {
+    try {
+      const token = localStorage.getItem('token');
+      // Retrieve Axios base URL, fallback if relative
+      let baseUrl = axiosClient.defaults.baseURL || '/api';
+      // Ensure we don't end up with /api/api if both are set
+      if (typeof window !== 'undefined' && baseUrl.startsWith('/')) {
+        baseUrl = window.location.origin + baseUrl;
+      }
+      const url = `${baseUrl}${API_ROUTES.MESSAGES.BY_ROOM(roomId)}/stream`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errMsg = `HTTP error ${response.status}`;
+        try {
+          const parsed = JSON.parse(errorText);
+          if (parsed.message) errMsg = parsed.message;
+        } catch {}
+        throw new Error(errMsg);
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder('utf-8');
+
+      if (!reader) {
+        throw new Error('Response body reader is not available');
+      }
+
+      let buffer = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep trailing incomplete line
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+
+          if (trimmed.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(trimmed.slice(6));
+              if (data.error) {
+                onError(new Error(data.error));
+              } else if (data.done) {
+                onDone(data);
+              } else if (data.token !== undefined) {
+                onToken(data.token);
+              }
+            } catch (e) {
+              // Ignore partial JSON parse errors
+            }
+          }
+        }
+      }
+    } catch (err: any) {
+      onError(err);
+    }
+  },
 };

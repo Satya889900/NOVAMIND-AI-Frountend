@@ -18,6 +18,8 @@ interface ChatActions {
   updateUserStatus: (userId: string, status: 'online' | 'offline' | 'away') => void;
   renameRoom: (roomId: string, name: string) => Promise<void>;
   deleteRoom: (roomId: string) => Promise<void>;
+  upsertStreamingMessage: (roomId: string, messageId: string, content: string, type?: 'text' | 'image', model?: string) => void;
+  finalizeStreamingMessage: (roomId: string, messageId: string, finalMessage: Message) => void;
 }
 
 export const useChatStore = create<ActiveChatState & ChatActions>((set, get) => ({
@@ -393,5 +395,86 @@ export const useChatStore = create<ActiveChatState & ChatActions>((set, get) => 
       set({ error: 'Failed to delete conversation.' });
       throw err;
     }
+  },
+
+  upsertStreamingMessage: (roomId, messageId, content, type = 'text', model = '') => {
+    set((state) => {
+      const roomMessages = state.messages[roomId] || [];
+      const exists = roomMessages.some((m) => m.id === messageId);
+
+      let updatedMessages;
+      if (exists) {
+        updatedMessages = roomMessages.map((m) => {
+          if (m.id === messageId) {
+            return {
+              ...m,
+              content,
+              type,
+              model: model || m.model,
+              updatedAt: new Date().toISOString(),
+            };
+          }
+          return m;
+        });
+      } else {
+        const botMessage: Message = {
+          id: messageId,
+          roomId,
+          senderId: 'novamind-ai-bot',
+          sender: {
+            id: 'novamind-ai-bot',
+            name: 'NovaMind AI',
+            email: 'novamind-ai@novamind.ai',
+            avatarUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=80&h=80&fit=crop',
+            status: 'online',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          content,
+          type,
+          model,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        updatedMessages = [...roomMessages, botMessage];
+      }
+
+      return {
+        messages: {
+          ...state.messages,
+          [roomId]: updatedMessages,
+        },
+      };
+    });
+  },
+
+  finalizeStreamingMessage: (roomId, messageId, finalMessage) => {
+    set((state) => {
+      const roomMessages = state.messages[roomId] || [];
+      const updatedMessages = roomMessages.map((m) => {
+        if (m.id === messageId) {
+          return finalMessage;
+        }
+        return m;
+      });
+
+      const updatedRooms = state.rooms.map((r) => {
+        if (r.id === roomId) {
+          return {
+            ...r,
+            lastMessage: finalMessage,
+          };
+        }
+        return r;
+      });
+
+      return {
+        messages: {
+          ...state.messages,
+          [roomId]: updatedMessages,
+        },
+        rooms: updatedRooms,
+      };
+    });
   },
 }));

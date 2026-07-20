@@ -58,6 +58,22 @@ export function ChatMessage({ message }: ChatMessageProps) {
   const [copied, setCopied] = useState(false);
   const [isPlayingSpeech, setIsPlayingSpeech] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Detect FLUX image generation in-progress state
+  // Two cases trigger the shimmer:
+  //  1. The streaming placeholder has the sentinel text injected by ChatContext
+  //  2. The message was from a flux model with empty/placeholder content
+  const isFluxGenerating =
+    !isMe &&
+    message.type === 'text' &&
+    typeof message.content === 'string' &&
+    (
+      message.content.includes('Generating image using FLUX') ||
+      (
+        (message.model?.toLowerCase().includes('flux') ?? false) &&
+        (message.content === '' || message.content.includes('Generating image'))
+      )
+    );
   const editInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Stop active speech on component unmount
@@ -225,8 +241,74 @@ export function ChatMessage({ message }: ChatMessageProps) {
                     : 'bg-white dark:bg-[#15122b]/55 border border-slate-200/50 dark:border-slate-800/40 text-slate-850 dark:text-slate-100 rounded-tl-[4px]'
                 }`}
               >
-                {/* Image Attachments */}
-                {message.type === 'image' && message.fileUrl ? (
+                {/* ── Image Generating Loader Card ── */}
+                {isFluxGenerating ? (
+                  <div className="flex flex-col gap-0 py-1 w-full max-w-sm">
+                    {/* Main loader card */}
+                    <div className="relative w-full rounded-2xl overflow-hidden border border-violet-200/50 dark:border-violet-700/40 bg-gradient-to-br from-[#f5f3ff] to-[#ede9fe] dark:from-[#1a1040]/80 dark:to-[#0f0a2a]/90 shadow-xl shadow-violet-500/10">
+
+                      {/* Animated shimmer sweep across top */}
+                      <div className="flux-shimmer-bg absolute inset-0 opacity-40" />
+
+                      {/* Subtle grid */}
+                      <div
+                        className="absolute inset-0 opacity-[0.04]"
+                        style={{
+                          backgroundImage:
+                            'linear-gradient(rgba(139,92,246,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.8) 1px, transparent 1px)',
+                          backgroundSize: '32px 32px',
+                        }}
+                      />
+
+                      <div className="relative z-10 flex flex-col items-center gap-4 px-6 py-8">
+
+                        {/* Spinner ring stack */}
+                        <div className="relative flex items-center justify-center w-20 h-20">
+                          {/* Outer slow spin ring */}
+                          <div className="absolute inset-0 rounded-full border-2 border-violet-200/30 dark:border-violet-800/40 border-t-violet-400 dark:border-t-violet-500 animate-spin" style={{ animationDuration: '3s' }} />
+                          {/* Middle faster ring */}
+                          <div className="absolute inset-2 rounded-full border-2 border-transparent border-t-purple-500 dark:border-t-purple-400 border-r-violet-400/50 animate-spin" style={{ animationDuration: '1.5s' }} />
+                          {/* Inner icon */}
+                          <div className="flux-icon-float w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/50">
+                            <ImageIcon size={18} className="text-white drop-shadow" />
+                          </div>
+                          {/* Glow pulse */}
+                          <div className="absolute inset-0 rounded-full bg-violet-400/10 dark:bg-violet-500/15 animate-ping" style={{ animationDuration: '2s' }} />
+                        </div>
+
+                        {/* Text block */}
+                        <div className="flex flex-col items-center gap-1.5 text-center">
+                          <span className="text-[13px] font-bold text-violet-700 dark:text-violet-300 tracking-tight leading-snug">
+                            NovaMind is generating your image
+                          </span>
+                          {/* Animated dots */}
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-violet-400 dark:bg-violet-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-purple-400 dark:bg-purple-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 dark:bg-indigo-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+                          </div>
+                          <span className="text-[10px] text-violet-400/80 dark:text-violet-500/70 font-medium mt-1">
+                            Please wait, this may take a few seconds
+                          </span>
+                        </div>
+
+                        {/* Progress bar */}
+                        <div className="w-full h-1.5 bg-violet-200/50 dark:bg-violet-900/50 rounded-full overflow-hidden">
+                          <div className="flux-progress-bar h-full bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500 rounded-full shadow-sm shadow-violet-400/40" />
+                        </div>
+
+                        {/* Footer badge */}
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-100/60 dark:bg-violet-900/30 border border-violet-200/40 dark:border-violet-700/30">
+                          <Sparkles size={9} className="text-violet-500 dark:text-violet-400 shrink-0" />
+                          <span className="text-[9px] font-bold text-violet-500 dark:text-violet-400 tracking-wide uppercase">
+                            FLUX.1 Schnell · AI Image Model
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : /* ── Real Image (generation done) ── */
+                message.type === 'image' && message.fileUrl ? (
                   <div className="flex flex-col gap-3 py-1">
                     <a
                       href={message.fileUrl}
@@ -299,7 +381,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 )}
 
                 {/* Left Side: Assistant Action Buttons inside bubble */}
-                {!isMe && (
+                {!isMe && !isFluxGenerating && (
                   <div className="flex items-center gap-4 mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/40 text-slate-400 dark:text-slate-500">
                     <button
                       onClick={handleCopy}
