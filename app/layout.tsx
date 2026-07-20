@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     "Gemini API",
     "Next.js",
     "Node.js",
-    "ChatGPT Clone",
+    "AI Assistant Hub",
     "Socket.IO",
     "RAG",
     "LangChain",

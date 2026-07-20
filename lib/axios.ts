@@ -41,14 +41,97 @@ axiosClient.interceptors.request.use(
 );
 
 // ── Response Interceptor ─────────────────────────────────────────────────────
-// On 401 (expired/invalid token) — clear token and redirect to login
+// On 401 (expired/invalid token) — try to refresh access token silently.
+// If refresh also fails, clear session and redirect to login.
+let isRefreshing = false;
+let pendingQueue: { resolve: (token: string) => void; reject: (err: any) => void }[] = [];
+
+const flushQueue = (error: any, token: string | null = null) => {
+  pendingQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(token!);
+    }
+  });
+  pendingQueue = [];
+};
+
+const forceLogout = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  }
+};
+
 axiosClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Only attempt refresh on 401 responses (not refresh endpoint itself)
+    if (
+      error.response?.status === 401 &&
+      typeof window !== 'undefined' &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes('/auth/refresh')
+    ) {
+      // If another request is already refreshing, queue this one
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          pendingQueue.push({
+            resolve: (token) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(axiosClient(originalRequest));
+            },
+            reject,
+          });
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = localStorage.getItem('refreshToken');
+
+      if (!refreshToken) {
+        isRefreshing = false;
+        forceLogout();
+        return Promise.reject(error);
+      }
+
+      try {
+        // Call the backend refresh endpoint
+        const { data } = await axiosClient.post('/auth/refresh', { refreshToken });
+        const newToken: string = data?.data?.token || data?.data?.accessToken || '';
+        const newRefreshToken: string = data?.data?.refreshToken || refreshToken;
+
+        if (!newToken) throw new Error('No token returned from refresh');
+
+        // Persist the new tokens
+        localStorage.setItem('token', newToken);
+        localStorage.setItem('refreshToken', newRefreshToken);
+
+        // Update default auth header
+        axiosClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+
+        // Flush pending requests with the new token
+        flushQueue(null, newToken);
+
+        // Retry the original failed request
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return axiosClient(originalRequest);
+      } catch (refreshError) {
+        flushQueue(refreshError, null);
+        forceLogout();
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
+
     return Promise.reject(error);
   }
 );

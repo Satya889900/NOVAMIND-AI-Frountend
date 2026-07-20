@@ -271,18 +271,10 @@ export default function SettingsPage() {
                     modelIcon = <Zap className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-emerald-500'}`} />;
                   } else if (provider.id === 'huggingface') {
                     modelIcon = <Bot className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-yellow-550'}`} />;
-                  } else if (provider.id === 'deepseek') {
-                    modelIcon = <Bot className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-teal-500'}`} />;
-                  } else if (provider.id === 'openai') {
-                    modelIcon = <Sparkles className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-emerald-500'}`} />;
-                  } else if (provider.id === 'cerebras') {
-                    modelIcon = <Zap className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-amber-550'}`} />;
                   } else if (provider.id === 'cloudflare') {
                     modelIcon = <Zap className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-orange-500'}`} />;
-                  } else if (provider.id === 'openrouter') {
-                    modelIcon = <Sparkles className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-fuchsia-500'}`} />;
                   } else if (provider.id === 'blackforest') {
-                    modelIcon = <Image className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-amber-500'}`} />;
+                    modelIcon = <Image className={`w-5 h-5 ${active ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-amber-550'}`} />;
                   }
 
                   return (

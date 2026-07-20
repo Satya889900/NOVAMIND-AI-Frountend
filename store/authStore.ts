@@ -37,6 +37,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       const response = await authService.login(data);
       
       get().setToken(response.token);
+      // Persist refresh token so silent refresh can work
+      if (response.refreshToken) {
+        localStorage.setItem('refreshToken', response.refreshToken);
+      }
       set({ user: response.user, isAuthenticated: true, isLoading: false });
       
       try {
@@ -57,6 +61,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       const response = await authService.register(data);
       
       get().setToken(response.token);
+      // Persist refresh token so silent refresh can work
+      if (response.refreshToken) {
+        localStorage.setItem('refreshToken', response.refreshToken);
+      }
       set({ user: response.user, isAuthenticated: true, isLoading: false });
       
       try {
