@@ -69,6 +69,11 @@ const PROVIDER_STYLE: Record<string, { icon: React.ReactNode; gradient: string; 
     gradient: 'from-amber-500 to-orange-500',
     badgeColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
   },
+  pollinations: {
+    icon: <Sparkles size={11} />,
+    gradient: 'from-pink-500 to-rose-500',
+    badgeColor: 'bg-pink-500/10 text-pink-600 dark:text-pink-400',
+  },
 };
 
 const DEFAULT_STYLE = {
@@ -112,7 +117,7 @@ export function ChatInput({ roomId, isNewRoom, onSendMessage, onTyping }: ChatIn
       try {
         const [providers, settings] = await Promise.all([
           settingsService.getProviders(),
-          settingsService.getSettings(),
+          settingsService.getSettings().catch(() => ({ defaultModel: 'gemini-3.1-flash-lite' })),
         ]);
 
         const allModels: ModelItem[] = [];

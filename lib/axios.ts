@@ -57,6 +57,23 @@ const flushQueue = (error: any, token: string | null = null) => {
   pendingQueue = [];
 };
 
+export const refreshAccessToken = async (): Promise<string> => {
+  if (typeof window === 'undefined') throw new Error('Client-side only');
+  const refreshToken = localStorage.getItem('refreshToken');
+  if (!refreshToken) throw new Error('No refresh token available');
+
+  const { data } = await axiosClient.post('/auth/refresh', { refreshToken });
+  const newToken: string = data?.data?.token || data?.data?.accessToken || '';
+  const newRefreshToken: string = data?.data?.refreshToken || refreshToken;
+
+  if (!newToken) throw new Error('No token returned from refresh');
+
+  localStorage.setItem('token', newToken);
+  localStorage.setItem('refreshToken', newRefreshToken);
+  axiosClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+  return newToken;
+};
+
 const forceLogout = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('token');

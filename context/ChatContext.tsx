@@ -150,11 +150,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       // Detect FLUX image generation model upfront
       const isFluxModel = model?.toLowerCase().includes('flux') ?? false;
 
-      // 1. Try sending via socket (real-time broadcast to other users)
-      try {
-        socketService.sendMessage(roomId, content, type || 'text');
-      } catch (e) {}
-
       // ── FLUX Shimmer: Immediately show the shimmer skeleton ──
       // FLUX bypasses text streaming and goes straight to image generation,
       // so no onToken callbacks fire during the wait. We pre-inject the

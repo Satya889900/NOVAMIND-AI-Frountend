@@ -68,10 +68,12 @@ export function ChatMessage({ message }: ChatMessageProps) {
     message.type === 'text' &&
     typeof message.content === 'string' &&
     (
-      message.content.includes('Generating image using FLUX') ||
+      message.content.includes('Generating image') ||
+      message.content.includes('🎨') ||
       (
-        (message.model?.toLowerCase().includes('flux') ?? false) &&
-        (message.content === '' || message.content.includes('Generating image'))
+        (message.model?.toLowerCase().includes('flux') ?? false) ||
+        (message.model?.toLowerCase().includes('pollinations-image') ?? false) ||
+        (message.model?.toLowerCase().endsWith('-image') ?? false)
       )
     );
   const editInputRef = useRef<HTMLTextAreaElement>(null);

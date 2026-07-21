@@ -6,7 +6,7 @@
  * PATCH  /messages/:id                    — Edit a message
  * DELETE /messages/:id                    — Delete a message
  */
-import axiosClient from '../lib/axios';
+import axiosClient, { refreshAccessToken } from '../lib/axios';
 import { API_ROUTES } from '../lib/constants';
 
 export interface ChatMessagePayload {
@@ -123,7 +123,7 @@ export const messageService = {
     onError: (err: any) => void
   ): Promise<void> => {
     try {
-      const token = localStorage.getItem('token');
+      let token = localStorage.getItem('token');
       // Retrieve Axios base URL, fallback if relative
       let baseUrl = axiosClient.defaults.baseURL || '/api';
       // Ensure we don't end up with /api/api if both are set
@@ -132,7 +132,7 @@ export const messageService = {
       }
       const url = `${baseUrl}${API_ROUTES.MESSAGES.BY_ROOM(roomId)}/stream`;
 
-      const response = await fetch(url, {
+      let response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -140,6 +140,23 @@ export const messageService = {
         },
         body: JSON.stringify(payload),
       });
+
+      // Handle 401 Token Expiry by automatically refreshing token & retrying
+      if (response.status === 401) {
+        try {
+          const newToken = await refreshAccessToken();
+          response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${newToken}`,
+            },
+            body: JSON.stringify(payload),
+          });
+        } catch {
+          // If token refresh fails, proceed to standard error handler below
+        }
+      }
 
       if (!response.ok) {
         const errorText = await response.text();

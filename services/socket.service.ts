@@ -6,13 +6,21 @@ class SocketService {
   private url: string = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
 
   connect(token: string): Socket<ServerToClientEvents, ClientToServerEvents> {
-    if (this.socket?.connected) return this.socket;
-
-    this.socket = io(this.url, {
-      auth: { token },
-      transports: ['websocket'],
-      autoConnect: true,
-    });
+    if (!this.socket) {
+      this.socket = io(this.url, {
+        auth: (cb) => {
+          const activeToken = typeof window !== 'undefined' ? localStorage.getItem('token') || token : token;
+          cb({ token: activeToken });
+        },
+        transports: ['websocket'],
+        autoConnect: true,
+      });
+    } else {
+      (this.socket.auth as any) = { token: typeof window !== 'undefined' ? localStorage.getItem('token') || token : token };
+      if (!this.socket.connected) {
+        this.socket.connect();
+      }
+    }
 
     return this.socket;
   }
