@@ -3,7 +3,7 @@ import { Message } from '../../types/chat';
 import { useAuthStore } from '../../store/authStore';
 import { useChatStore } from '../../store/chatStore';
 import { formatTime } from '../../lib/utils';
-import { MoreVertical, Pencil, Trash2, X, Check, FileText, Sparkles, Zap, Bot, Image as ImageIcon, Copy, Mic, Volume2, VolumeX, ThumbsUp, ThumbsDown, RotateCw, CheckCheck } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, X, Check, FileText, Sparkles, Zap, Bot, Image as ImageIcon, Copy, Mic, Volume2, VolumeX, ThumbsUp, ThumbsDown, RotateCw, CheckCheck, Download } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -56,6 +56,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content || '');
   const [copied, setCopied] = useState(false);
+  const [imageCopied, setImageCopied] = useState(false);
   const [isPlayingSpeech, setIsPlayingSpeech] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -129,6 +130,36 @@ export function ChatMessage({ message }: ChatMessageProps) {
       document.body.removeChild(el);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleDownloadImage = async (url: string, filename?: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename || `novamind-ai-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.download = filename || `novamind-ai-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleCopyImageLink = (url: string) => {
+    navigator.clipboard.writeText(url).then(() => {
+      setImageCopied(true);
+      setTimeout(() => setImageCopied(false), 2000);
     });
   };
 
@@ -311,21 +342,46 @@ export function ChatMessage({ message }: ChatMessageProps) {
                   </div>
                 ) : /* ── Real Image (generation done) ── */
                 message.type === 'image' && message.fileUrl ? (
-                  <div className="flex flex-col gap-3 py-1">
-                    <a
-                      href={message.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block max-w-sm w-full aspect-square overflow-hidden rounded-xl border border-slate-200/60 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-md transition-all duration-300 hover:shadow-lg hover:shadow-slate-500/10 group/img"
-                    >
-                      <img
-                        src={message.fileUrl}
-                        alt={message.content || 'Image attachment'}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-[1.03]"
-                      />
-                    </a>
+                  <div className="flex flex-col gap-2.5 py-1 max-w-sm w-full">
+                    <div className="relative group/img-card w-full rounded-2xl overflow-hidden border border-slate-200/60 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 shadow-md">
+                      <a
+                        href={message.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full aspect-square overflow-hidden"
+                      >
+                        <img
+                          src={message.fileUrl}
+                          alt={message.content || 'AI Generated Image'}
+                          className="w-full h-full object-cover transition-transform duration-500 hover:scale-[1.02]"
+                        />
+                      </a>
+                      
+                      {/* Image Action Bar: Download & Copy Link */}
+                      <div className="flex items-center gap-2 p-2 bg-slate-100/90 dark:bg-[#120f26]/90 backdrop-blur-md border-t border-slate-200/50 dark:border-slate-800/60">
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadImage(message.fileUrl!, message.fileName || `novamind-image-${Date.now()}.png`)}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#4d3df2] to-[#794ef7] hover:opacity-95 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95"
+                          title="Download high resolution image"
+                        >
+                          <Download size={13} />
+                          Download
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyImageLink(message.fileUrl!)}
+                          className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95"
+                          title="Copy Image URL"
+                        >
+                          {imageCopied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                          <span>{imageCopied ? 'Copied!' : 'Copy Link'}</span>
+                        </button>
+                      </div>
+                    </div>
+
                     {message.content && message.content !== message.fileName && (
-                      <p className={`mt-1 font-medium leading-relaxed ${isMe ? 'text-[#1b1248] dark:text-[#f1f0fb]' : 'text-slate-700 dark:text-slate-350'}`}>{message.content}</p>
+                      <p className={`text-xs font-medium leading-relaxed ${isMe ? 'text-[#1b1248] dark:text-[#f1f0fb]' : 'text-slate-700 dark:text-slate-350'}`}>{message.content}</p>
                     )}
                   </div>
                 ) : /* Voice Message Attachments */
@@ -384,40 +440,44 @@ export function ChatMessage({ message }: ChatMessageProps) {
 
                 {/* Left Side: Assistant Action Buttons inside bubble */}
                 {!isMe && !isFluxGenerating && (
-                  <div className="flex items-center gap-4 mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/40 text-slate-400 dark:text-slate-500">
+                  <div className="flex items-center gap-3 mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/40 text-slate-400 dark:text-slate-500">
                     <button
                       onClick={handleCopy}
-                      className="hover:text-[#794ef7] dark:hover:text-[#a78bfa] transition-colors cursor-pointer"
-                      title={copied ? "Copied!" : "Copy message"}
+                      className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#794ef7] dark:hover:text-[#a78bfa] transition-colors cursor-pointer text-xs font-semibold"
+                      title={copied ? "Copied!" : "Copy text"}
                     >
-                      <Copy size={13} />
+                      {copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                      <span className={copied ? 'text-emerald-600 dark:text-emerald-400' : ''}>
+                        {copied ? 'Copied!' : 'Copy Text'}
+                      </span>
                     </button>
                     <button
-                      className="hover:text-[#794ef7] dark:hover:text-[#a78bfa] transition-colors cursor-pointer"
+                      className="p-1 hover:text-[#794ef7] dark:hover:text-[#a78bfa] transition-colors cursor-pointer"
                       title="Like"
                     >
                       <ThumbsUp size={13} />
                     </button>
                     <button
-                      className="hover:text-[#794ef7] dark:hover:text-[#a78bfa] transition-colors cursor-pointer"
+                      className="p-1 hover:text-[#794ef7] dark:hover:text-[#a78bfa] transition-colors cursor-pointer"
                       title="Dislike"
                     >
                       <ThumbsDown size={13} />
-                    </button>
-                    <button
-                      className="hover:text-[#794ef7] dark:hover:text-[#a78bfa] transition-colors cursor-pointer"
-                      title="Regenerate"
-                    >
-                      <RotateCw size={13} />
                     </button>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Edit / Delete Hover Action Menu (For User messages) */}
+            {/* Edit / Delete / Copy Hover Action Menu (For User messages) */}
             {isMe && !isEditing && (
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0 self-center">
+                <button
+                  onClick={handleCopy}
+                  className="p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                  title={copied ? "Copied!" : "Copy message text"}
+                >
+                  {copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                </button>
                 {message.content && message.type !== 'image' && (
                   <button
                     onClick={handleSpeak}
