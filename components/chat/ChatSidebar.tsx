@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { useChat } from '../../hooks/useChat';
 import { useAuthStore } from '../../store/authStore';
+import { useUiStore } from '../../store/uiStore';
 import { Room } from '../../types/chat';
-import { Plus, MessageSquare, Image, MapPin, Activity, Book, Bot } from 'lucide-react';
+import { Plus, MessageSquare, Image, MapPin, Activity, Book, Bot, PanelLeftClose } from 'lucide-react';
 
 interface ChatSidebarProps {
   onCreateChat?: () => void;
@@ -13,6 +14,7 @@ interface ChatSidebarProps {
 export function ChatSidebar({ onCreateChat }: ChatSidebarProps) {
   const { rooms, activeRoom, selectRoom, fetchRooms } = useChat();
   const { user } = useAuthStore();
+  const { toggleChatList } = useUiStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -193,7 +195,7 @@ export function ChatSidebar({ onCreateChat }: ChatSidebarProps) {
       <div className="p-4 shrink-0">
         <button
           onClick={onCreateChat}
-          className="w-full py-3.5 bg-gradient-to-r from-[#4d3df2] to-[#794ef7] hover:opacity-95 text-white font-extrabold rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-[#4d3df2]/15 transition-all active:scale-[0.98] cursor-pointer text-sm"
+          className="w-full py-3 bg-gradient-to-r from-[#4d3df2] to-[#794ef7] hover:opacity-95 text-white font-extrabold rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-[#4d3df2]/15 transition-all active:scale-[0.98] cursor-pointer text-sm"
         >
           <Plus size={16} />
           New Chat

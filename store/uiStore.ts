@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 interface UiState {
   sidebarOpen: boolean;
+  chatListOpen: boolean;
   theme: 'light' | 'dark' | 'system';
   accentColor: string;
   fontSize: 'small' | 'medium' | 'large';
@@ -10,6 +11,8 @@ interface UiState {
   activeModal: string | null; // 'create_room' | 'profile' etc.
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
+  toggleChatList: () => void;
+  setChatListOpen: (open: boolean) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   setAccentColor: (color: string) => void;
   setFontSize: (size: 'small' | 'medium' | 'large') => void;
@@ -20,6 +23,7 @@ interface UiState {
 
 export const useUiStore = create<UiState>((set) => ({
   sidebarOpen: true,
+  chatListOpen: true,
   theme: typeof window !== 'undefined' ? (localStorage.getItem('theme') as any) || 'system' : 'system',
   accentColor: typeof window !== 'undefined' ? localStorage.getItem('accentColor') || 'purple' : 'purple',
   fontSize: typeof window !== 'undefined' ? (localStorage.getItem('fontSize') as any) || 'medium' : 'medium',
@@ -29,6 +33,8 @@ export const useUiStore = create<UiState>((set) => ({
 
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  toggleChatList: () => set((state) => ({ chatListOpen: !state.chatListOpen })),
+  setChatListOpen: (open) => set({ chatListOpen: open }),
   setTheme: (theme) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('theme', theme);

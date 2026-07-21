@@ -5,7 +5,8 @@ import { Room } from '../../types/chat';
 import { useAuthStore } from '../../store/authStore';
 import { useChat } from '../../hooks/useChat';
 import { useTheme } from '../../hooks/useTheme';
-import { Users, MoreVertical, Edit2, Trash2, Check, X, ArrowLeft, Sun, Moon, ChevronDown, Sparkles } from 'lucide-react';
+import { useUiStore } from '../../store/uiStore';
+import { Users, MoreVertical, Edit2, Trash2, Check, X, ArrowLeft, Sun, Moon, ChevronDown, Sparkles, PanelLeft, PanelLeftClose, Menu } from 'lucide-react';
 
 interface ChatHeaderProps {
   room: Room;
@@ -15,6 +16,7 @@ export function ChatHeader({ room }: ChatHeaderProps) {
   const { user } = useAuthStore();
   const { renameRoom, deleteRoom, selectRoom } = useChat();
   const { theme, setTheme } = useTheme();
+  const { chatListOpen, toggleChatList, toggleSidebar } = useUiStore();
 
   const [isEditing, setIsEditing] = useState(false);
   const [newName, setNewName] = useState(room.name || '');
@@ -81,6 +83,26 @@ export function ChatHeader({ room }: ChatHeaderProps) {
     <div className="h-20 border-b border-slate-200/50 dark:border-slate-800/40 bg-white dark:bg-[#0c0a1b] px-4 sm:px-6 flex items-center justify-between shrink-0 relative z-30 transition-colors duration-300">
       {/* Left side: Avatar + Title & Subtitle Badge */}
       <div className="flex items-center gap-3 flex-1 min-w-0">
+        {/* Toggle Chat Conversations Sidebar button */}
+        <button
+          type="button"
+          onClick={toggleChatList}
+          className="hidden lg:flex p-2 hover:bg-slate-100 dark:hover:bg-[#1a1738]/60 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 rounded-xl transition-all cursor-pointer items-center justify-center shrink-0 border border-slate-200/50 dark:border-slate-800/40"
+          title={chatListOpen ? "Hide Chat List Sidebar" : "Show Chat List Sidebar"}
+        >
+          {chatListOpen ? <PanelLeftClose size={18} /> : <PanelLeft size={18} className="text-[#794ef7] dark:text-[#a78bfa] animate-pulse" />}
+        </button>
+
+        {/* Mobile main navigation sidebar menu trigger */}
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className="p-1.5 hover:bg-slate-50 dark:hover:bg-[#1a1738]/50 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 rounded-lg transition-colors cursor-pointer lg:hidden flex items-center justify-center shrink-0"
+          title="Toggle Navigation Menu"
+        >
+          <Menu size={18} />
+        </button>
+
         {/* Back button on mobile */}
         <button
           onClick={() => selectRoom(null)}

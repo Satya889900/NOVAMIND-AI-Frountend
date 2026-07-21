@@ -79,35 +79,51 @@ export function DashboardSidebar() {
         }`}
       >
         {/* Header / Logo */}
-        <div className="p-5 border-b border-[#23154c]/30 flex items-center justify-between shrink-0 h-20">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-tr from-[#5f3be3] to-[#794ef7] text-white font-extrabold text-lg shrink-0 shadow-glow-purple">
-              N
-            </div>
-            {sidebarOpen && (
-              <div className="flex flex-col">
-                <span className="text-base font-bold tracking-tight text-white leading-none">
-                  NovaMind
-                </span>
-                <span className="text-[9px] font-medium text-[#7c6fc2] mt-0.5 tracking-wider uppercase font-semibold leading-none">
-                  AI Personal Assistant
-                </span>
+        <div className={`border-b border-[#23154c]/30 flex items-center shrink-0 h-20 transition-all ${
+          sidebarOpen ? 'p-4 justify-between' : 'justify-center p-2'
+        }`}>
+          {sidebarOpen ? (
+            <>
+              <div className="flex items-center gap-3 overflow-hidden">
+                <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-tr from-[#5f3be3] to-[#794ef7] text-white font-extrabold text-lg shrink-0 shadow-glow-purple">
+                  N
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-base font-bold tracking-tight text-white leading-none">
+                    NovaMind
+                  </span>
+                  <span className="text-[9px] font-medium text-[#7c6fc2] mt-0.5 tracking-wider uppercase font-semibold leading-none">
+                    AI Personal Assistant
+                  </span>
+                </div>
               </div>
-            )}
-          </div>
-          {sidebarOpen && (
-            <button
-              onClick={toggleSidebar}
-              className="p-1 hover:bg-[#1d163f] text-[#8a88a5] hover:text-white rounded-lg transition-colors cursor-pointer lg:hidden"
-              title="Collapse Sidebar"
-            >
-              <ChevronLeft size={16} />
-            </button>
+              <button
+                onClick={toggleSidebar}
+                className="p-1.5 hover:bg-[#1d163f] text-[#8a88a5] hover:text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center shrink-0"
+                title="Collapse Navigation Sidebar"
+              >
+                <ChevronLeft size={16} />
+              </button>
+            </>
+          ) : (
+            /* Collapsed Sidebar Header: Always Visible Logo N + Expand Trigger */
+            <div className="flex flex-col items-center justify-center gap-1.5 w-full">
+              <button
+                onClick={toggleSidebar}
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-[#5f3be3] to-[#794ef7] text-white font-extrabold text-xl shrink-0 shadow-glow-purple hover:scale-105 transition-transform cursor-pointer relative group"
+                title="Click to Expand Sidebar"
+              >
+                N
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#1a1236] border border-[#794ef7] flex items-center justify-center text-[#a78bfa] opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ChevronRight size={10} />
+                </div>
+              </button>
+            </div>
           )}
         </div>
 
         {/* Navigation List */}
-        <div className="flex-1 py-4 px-3 overflow-y-auto flex flex-col gap-6">
+        <div className="flex-1 py-4 px-2.5 overflow-y-auto flex flex-col gap-6">
           <nav className="flex flex-col gap-1.5">
             {navItems.map((item) => {
               // Only highlight Chat on /chat, and let AI Assistant be a link but not double-highlighted
@@ -120,15 +136,18 @@ export function DashboardSidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center justify-between py-2.5 px-3.5 rounded-xl transition-all group relative ${
+                  title={!sidebarOpen ? item.name : undefined}
+                  className={`flex items-center ${
+                    sidebarOpen ? 'justify-between py-2.5 px-3.5' : 'justify-center py-3 px-2'
+                  } rounded-xl transition-all group relative ${
                     isActive
                       ? 'bg-gradient-to-r from-[#4d3df2] to-[#794ef7] text-white font-semibold shadow-glow-purple'
                       : 'text-[#8a88a5] hover:bg-[#1a1236]/50 hover:text-white'
                   }`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className={`flex items-center ${sidebarOpen ? 'gap-3' : 'justify-center'} min-w-0`}>
                     <Icon
-                      size={18}
+                      size={20}
                       className={`shrink-0 transition-transform group-hover:scale-110 ${
                         isActive ? 'text-white' : 'text-[#8a88a5] group-hover:text-white'
                       }`}

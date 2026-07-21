@@ -10,6 +10,7 @@ import { X, Plus, Users } from 'lucide-react';
 
 export default function ChatPage() {
   const { activeRoom, createRoom, selectRoom } = useChat();
+  const { chatListOpen } = useUiStore();
   
   const handleCreateNewChat = async () => {
     try {
@@ -29,13 +30,18 @@ export default function ChatPage() {
   return (
     <div className="flex-1 flex overflow-hidden h-full relative w-full">
       {/* Conversations list sidebar */}
-      <div className={`shrink-0 h-full ${activeRoom ? 'chat-sidebar-responsive-hidden chat-sidebar-responsive-visible' : 'w-full lg:w-80 flex flex-col'}`}>
+      <div
+        className={`shrink-0 h-full transition-all duration-300 ease-in-out ${
+          chatListOpen
+            ? 'w-full lg:w-80 border-r border-slate-200/50 dark:border-slate-800/40'
+            : 'w-0 opacity-0 overflow-hidden pointer-events-none border-0'
+        } ${activeRoom ? 'max-lg:hidden' : 'w-full'}`}
+      >
         <ChatSidebar onCreateChat={handleCreateNewChat} />
       </div>
 
       {/* Active chat window or empty state container */}
-      <div className={`h-full flex flex-col ${activeRoom ? 'chat-window-responsive-full chat-window-responsive-desktop' : 'max-lg:hidden lg:flex flex-1'}`}>
-
+      <div className={`h-full flex flex-col flex-1 min-w-0 transition-all duration-300 ${activeRoom ? 'w-full' : 'max-lg:hidden flex-1'}`}>
         {activeRoom ? (
           <ChatWindow room={activeRoom} />
         ) : (
