@@ -503,11 +503,12 @@ export function ChatInput({ roomId, isNewRoom, onSendMessage, onTyping }: ChatIn
                       Select AI Model
                     </p>
                   </div>
-                  <div className="max-h-[220px] overflow-y-auto py-1.5">
+                  <div className="max-h-[240px] overflow-y-auto py-1.5">
                     {models.map((model) => {
                       const style = PROVIDER_STYLE[model.providerId] || DEFAULT_STYLE;
                       const isSelected = model.id === selectedModel;
                       const isDisabled = !model.configured;
+                      const isImageCapable = model.badge.includes('Image') || model.id.includes('flux') || model.id.includes('image') || model.providerId === 'gemini';
 
                       return (
                         <button
@@ -534,12 +535,17 @@ export function ChatInput({ roomId, isNewRoom, onSendMessage, onTyping }: ChatIn
                               <span className={`text-[12.5px] font-bold truncate ${isSelected ? 'text-[#794ef7] dark:text-[#a78bfa]' : 'text-slate-800 dark:text-slate-200'}`}>
                                 {model.name}
                               </span>
-                              <span className={`text-[8.5px] font-extrabold px-1.5 py-0.5 rounded-full whitespace-nowrap ${style.badgeColor}`}>
+                              <span className={`text-[8.5px] font-extrabold px-1.5 py-0.5 rounded-full whitespace-nowrap flex items-center gap-0.5 ${
+                                isImageCapable
+                                  ? 'bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/20'
+                                  : style.badgeColor
+                              }`}>
+                                {isImageCapable && <Image size={9} className="shrink-0" />}
                                 {model.badge}
                               </span>
                             </div>
                             <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight truncate">
-                              {isDisabled ? `Requires ${model.providerId.toUpperCase()}_API_KEY` : model.providerName}
+                              {isDisabled ? `Requires ${model.providerId.toUpperCase()}_API_KEY` : model.description || model.providerName}
                             </p>
                           </div>
                           {isSelected && (
