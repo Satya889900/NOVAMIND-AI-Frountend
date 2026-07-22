@@ -15,6 +15,8 @@ export interface Document {
   summary?: string;
   keyTakeaways?: string[];
   suggestedQuestions?: string[];
+  sourceType?: 'pdf' | 'docx' | 'txt' | 'youtube' | 'web';
+  sourceUrl?: string;
   auditReport?: string;
   createdAt: string;
   updatedAt: string;

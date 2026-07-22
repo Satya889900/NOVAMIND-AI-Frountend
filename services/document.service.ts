@@ -83,4 +83,15 @@ export const documentService = {
     );
     return res.data;
   },
+
+  /**
+   * POST /documents/url — ingest YouTube or Web URL
+   */
+  processUrl: async (url: string): Promise<ApiResult<Document>> => {
+    const res = await axiosClient.post<ApiResult<Document>>(
+      `${API_ROUTES.DOCUMENTS.BASE}/url`,
+      { url }
+    );
+    return res.data;
+  },
 };

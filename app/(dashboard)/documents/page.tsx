@@ -198,6 +198,82 @@ function PdfCard({ doc, onStar, onDelete, onChat, isDeleting }: {
   );
 }
 
+// ─── YouTube Card ──────────────────────────────────────────────────────────────
+
+function YouTubeCard({ doc, onStar, onDelete, onChat, isDeleting }: {
+  doc: Document;
+  onStar: (doc: Document, e: React.MouseEvent) => void;
+  onDelete: (id: string, e: React.MouseEvent) => void;
+  onChat?: (doc: Document, e: React.MouseEvent) => void;
+  isDeleting: boolean;
+}) {
+  const badge = getStatusBadge(doc.status);
+
+  return (
+    <div
+      onClick={() => doc.storagePath && window.open(doc.storagePath, '_blank')}
+      className="group relative flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:border-red-400 dark:hover:border-red-700/50 hover:shadow-lg hover:shadow-red-500/5 transition-all duration-200 cursor-pointer"
+    >
+      <div className="relative flex flex-col items-center justify-center bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/20 h-40 gap-2">
+        <div className="w-14 h-14 rounded-2xl bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800/40 flex items-center justify-center shadow-md text-red-500 font-extrabold text-xl">
+          ▶
+        </div>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-red-500">YOUTUBE</span>
+
+        <div className="absolute inset-0 bg-red-900/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200 rounded-t-2xl">
+          <ExternalLink size={22} className="text-white drop-shadow" />
+        </div>
+
+        <button
+          onClick={(e) => onStar(doc, e)}
+          className={`absolute top-2 right-2 p-1.5 rounded-lg transition-all ${
+            doc.isStarred
+              ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/30'
+              : 'text-slate-400 opacity-0 group-hover:opacity-100 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 bg-white/80 dark:bg-slate-800/80'
+          }`}
+          title={doc.isStarred ? 'Unstar' : 'Star to protect'}
+        >
+          <Star size={13} className={doc.isStarred ? 'fill-current' : ''} />
+        </button>
+      </div>
+
+      <div className="p-3 flex flex-col gap-1.5">
+        <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate" title={doc.originalName}>
+          {doc.originalName}
+        </p>
+        <div className="flex items-center justify-between gap-1">
+          <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${badge.className}`}>
+            {badge.icon}
+            {badge.label}
+          </span>
+          <span className="text-[9px] text-red-500 font-bold">Transcript</span>
+        </div>
+
+        <div className="flex items-center gap-1 mt-0.5">
+          {doc.status === 'Ready' && onChat && (
+            <button
+              onClick={(e) => onChat(doc, e)}
+              className="flex-1 flex items-center justify-center gap-1 py-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-lg transition-colors"
+              title="Chat with YouTube Transcript"
+            >
+              <MessageSquare size={11} />
+              Chat
+            </button>
+          )}
+          <button
+            onClick={(e) => onDelete(doc._id, e)}
+            disabled={isDeleting}
+            className="flex items-center justify-center p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-colors disabled:opacity-50"
+            title="Delete document"
+          >
+            {isDeleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Image Card ────────────────────────────────────────────────────────────────
 
 function ImageCard({ doc, onStar, onDelete }: {
@@ -344,8 +420,26 @@ export default function DocumentsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [urlInput, setUrlInput] = useState('');
+  const [isSubmittingUrl, setIsSubmittingUrl] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
+
+  const handleUrlSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!urlInput || !urlInput.trim()) return;
+    setIsSubmittingUrl(true);
+    setGlobalError(null);
+    try {
+      const res = await documentService.processUrl(urlInput.trim());
+      setDocuments((prev) => [res.data, ...prev]);
+      setUrlInput('');
+    } catch (err: any) {
+      setGlobalError(err?.response?.data?.message || 'Failed to process URL.');
+    } finally {
+      setIsSubmittingUrl(false);
+    }
+  };
 
   const handleChatWithDocument = async (doc: Document, e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -502,9 +596,10 @@ export default function DocumentsPage() {
   const paginatedDocs = documents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // Split by type for current page
+  const youtubeDocs = paginatedDocs.filter((d) => d.sourceType === 'youtube' || d.fileType === 'youtube');
   const imageDocs = paginatedDocs.filter((d) => isImage(d.fileType));
   const pdfDocs = paginatedDocs.filter((d) => isPdf(d.fileType));
-  const otherDocs = paginatedDocs.filter((d) => !isImage(d.fileType) && !isPdf(d.fileType));
+  const otherDocs = paginatedDocs.filter((d) => !isImage(d.fileType) && !isPdf(d.fileType) && d.sourceType !== 'youtube' && d.fileType !== 'youtube');
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -630,6 +725,32 @@ export default function DocumentsPage() {
           </div>
         </div>
 
+        {/* YouTube & Web URL Input Bar */}
+        <div className="p-4 bg-white dark:bg-[#12112a] border border-[#e2e8f0] dark:border-[#201e3d] rounded-2xl shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+              <span className="text-red-500 font-extrabold text-sm">▶</span> Import YouTube Video or Web Page
+            </span>
+            <span className="text-[10px] text-slate-400">Extracts transcripts & articles automatically</span>
+          </div>
+          <form onSubmit={handleUrlSubmit} className="flex items-center gap-2">
+            <input
+              type="url"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              placeholder="Paste YouTube URL (e.g. https://www.youtube.com/watch?v=...) or Web link..."
+              className="flex-1 px-3.5 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200"
+            />
+            <button
+              type="submit"
+              disabled={isSubmittingUrl || !urlInput.trim()}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              {isSubmittingUrl ? <Loader2 size={13} className="animate-spin" /> : 'Import URL'}
+            </button>
+          </form>
+        </div>
+
         {/* Upload Queue */}
         {uploadQueue.length > 0 && (
           <div className="space-y-3">
@@ -709,6 +830,29 @@ export default function DocumentsPage() {
                         doc={doc}
                         onStar={handleStar}
                         onDelete={handleDelete}
+                        isDeleting={deletingId === doc._id}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── YouTube Videos Grid (4 per row) ── */}
+              {youtubeDocs.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-red-500 dark:text-red-400 flex items-center gap-1.5">
+                    <span className="w-4 h-px bg-red-400 dark:bg-red-700 rounded" />
+                    YouTube Videos & Captions
+                    <span className="text-[10px] font-normal normal-case">({youtubeDocs.length})</span>
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {youtubeDocs.map((doc) => (
+                      <YouTubeCard
+                        key={doc._id}
+                        doc={doc}
+                        onStar={handleStar}
+                        onDelete={handleDelete}
+                        onChat={handleChatWithDocument}
                         isDeleting={deletingId === doc._id}
                       />
                     ))}
