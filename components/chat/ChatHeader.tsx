@@ -49,13 +49,9 @@ export function ChatHeader({ room }: ChatHeaderProps) {
     ? room.participants.find((p) => p.id !== user?.id)
     : null;
 
-  const title = room.name && room.name !== 'New Chat'
+  const displayTitle = (room.name && room.name.trim() !== '' && room.name !== 'New Chat' && room.name !== 'Direct Chat')
     ? room.name
-    : room.isGroup
-      ? room.name
-      : (recipient?.name || 'Direct Chat');
-
-  const displayTitle = title === 'Gemini Pro' || title === 'Gemini' || title === 'Direct Chat' ? 'NovaMind AI' : title;
+    : (recipient?.name && recipient.name !== 'NovaMind AI' ? recipient.name : 'NovaMind AI');
 
   const handleRename = async (e: React.FormEvent) => {
     e.preventDefault();
