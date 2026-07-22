@@ -15,6 +15,7 @@ export interface Document {
   summary?: string;
   keyTakeaways?: string[];
   suggestedQuestions?: string[];
+  auditReport?: string;
   createdAt: string;
   updatedAt: string;
 }

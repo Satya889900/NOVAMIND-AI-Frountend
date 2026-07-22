@@ -73,4 +73,14 @@ export const documentService = {
     );
     return res.data;
   },
+
+  /**
+   * POST /documents/:id/audit — perform AI document audit & error detection
+   */
+  auditDocument: async (id: string): Promise<ApiResult<{ document: Document; auditReport: string }>> => {
+    const res = await axiosClient.post<ApiResult<{ document: Document; auditReport: string }>>(
+      `${API_ROUTES.DOCUMENTS.BY_ID(id)}/audit`
+    );
+    return res.data;
+  },
 };
