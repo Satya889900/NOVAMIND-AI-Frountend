@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Image, Paperclip, Loader2, FileText, X, ChevronDown, Sparkles, Zap, Bot, Mic, Square } from 'lucide-react';
+import { Send, Image, Paperclip, Loader2, FileText, X, ChevronDown, Sparkles, Zap, Bot, Mic, Square, Headphones } from 'lucide-react';
 import { chatService } from '../../services/chat.service';
 import { settingsService, ProviderStatus } from '../../services/settings.service';
 
@@ -16,6 +16,7 @@ interface ChatInputProps {
     model?: string
   ) => void;
   onTyping: (isTyping: boolean) => void;
+  onOpenVoiceMode?: () => void;
 }
 
 interface AttachedFile {
@@ -88,7 +89,7 @@ const formatTimeMinutes = (seconds: number): string => {
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 };
 
-export function ChatInput({ roomId, isNewRoom, onSendMessage, onTyping }: ChatInputProps) {
+export function ChatInput({ roomId, isNewRoom, onSendMessage, onTyping, onOpenVoiceMode }: ChatInputProps) {
   const [content, setContent] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
@@ -582,8 +583,29 @@ export function ChatInput({ roomId, isNewRoom, onSendMessage, onTyping }: ChatIn
             </div>
           </div>
 
-          {/* Right Side: Action send trigger */}
-          <div className="flex items-center">
+          {/* Right Side: Action send trigger & Voice Mode */}
+          <div className="flex items-center gap-1.5">
+            {onOpenVoiceMode && !isRecording && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                    try {
+                      window.speechSynthesis.cancel();
+                      window.speechSynthesis.resume();
+                    } catch (e) {}
+                  }
+                  onOpenVoiceMode();
+                }}
+                disabled={isUploading}
+                className="w-8 h-8 bg-[#f0edff] hover:bg-[#e5e1ff] dark:bg-[#1a1636] dark:hover:bg-[#231e4a] text-[#794ef7] dark:text-[#a78bfa] rounded-full border border-[#dcd8f8]/60 dark:border-[#382b6b]/40 transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95 disabled:opacity-50 relative group"
+                title="Start ChatGPT Voice Conversation"
+              >
+                <Headphones size={13} />
+                <span className="absolute -top-1 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#121025] animate-pulse" />
+              </button>
+            )}
+
             {!isRecording && (
               content.trim() || attachedFile ? (
                 <button

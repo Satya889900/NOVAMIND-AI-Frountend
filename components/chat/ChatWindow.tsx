@@ -7,6 +7,7 @@ import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { TypingIndicator } from './TypingIndicator';
 import { DocumentSummaryPanel } from './DocumentSummaryPanel';
+import { VoiceConversationModal } from './VoiceConversationModal';
 import { useChat } from '../../hooks/useChat';
 import { useAuthStore } from '../../store/authStore';
 import { FileText } from 'lucide-react';
@@ -23,6 +24,7 @@ export function ChatWindow({ room }: ChatWindowProps) {
   const roomTyping = typingUsers[room.id] || [];
 
   const [showSummary, setShowSummary] = useState(false);
+  const [isVoiceModeOpen, setIsVoiceModeOpen] = useState(false);
 
   useEffect(() => {
     setShowSummary(!!room.documentId);
@@ -149,7 +151,7 @@ export function ChatWindow({ room }: ChatWindowProps) {
     <div className="flex-1 flex h-full min-w-0 overflow-hidden relative">
       {/* Left side: Main Chat Window */}
       <div className="flex-1 flex flex-col h-full min-w-0 bg-[#ffffff] dark:bg-[#0c0a1b]">
-        <ChatHeader room={room} />
+        <ChatHeader room={room} onOpenVoiceMode={() => setIsVoiceModeOpen(true)} />
 
         {/* Floating Toggle Summary Panel Button */}
         {room.documentId && (
@@ -201,6 +203,7 @@ export function ChatWindow({ room }: ChatWindowProps) {
           isNewRoom={roomMessages.length === 0}
           onSendMessage={(content, type, fileUrl, fileName, model) => sendMessage(room.id, content, type, fileUrl, fileName, model)}
           onTyping={(isTyping) => emitTyping(room.id, isTyping)}
+          onOpenVoiceMode={() => setIsVoiceModeOpen(true)}
         />
       </div>
 
@@ -212,6 +215,13 @@ export function ChatWindow({ room }: ChatWindowProps) {
           onClose={() => setShowSummary(false)}
         />
       )}
+
+      {/* ChatGPT-Style Interactive Voice Conversation Modal */}
+      <VoiceConversationModal
+        isOpen={isVoiceModeOpen}
+        onClose={() => setIsVoiceModeOpen(false)}
+        roomId={room.id}
+      />
     </div>
   );
 }

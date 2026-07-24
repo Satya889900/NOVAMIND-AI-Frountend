@@ -6,13 +6,14 @@ import { useAuthStore } from '../../store/authStore';
 import { useChat } from '../../hooks/useChat';
 import { useTheme } from '../../hooks/useTheme';
 import { useUiStore } from '../../store/uiStore';
-import { Users, MoreVertical, Edit2, Trash2, Check, X, ArrowLeft, Sun, Moon, ChevronDown, Sparkles, PanelLeft, PanelLeftClose, Menu } from 'lucide-react';
+import { Users, MoreVertical, Edit2, Trash2, Check, X, ArrowLeft, Sun, Moon, ChevronDown, Sparkles, PanelLeft, PanelLeftClose, Menu, Headphones } from 'lucide-react';
 
 interface ChatHeaderProps {
   room: Room;
+  onOpenVoiceMode?: () => void;
 }
 
-export function ChatHeader({ room }: ChatHeaderProps) {
+export function ChatHeader({ room, onOpenVoiceMode }: ChatHeaderProps) {
   const { user } = useAuthStore();
   const { renameRoom, deleteRoom, selectRoom } = useChat();
   const { theme, setTheme } = useTheme();
@@ -179,6 +180,27 @@ export function ChatHeader({ room }: ChatHeaderProps) {
 
       {/* Right side: Actions / theme / profile */}
       <div className="flex items-center gap-3 shrink-0">
+        {/* ChatGPT-style Voice Conversation Mode Trigger Button */}
+        {onOpenVoiceMode && (
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                try {
+                  window.speechSynthesis.cancel();
+                  window.speechSynthesis.resume();
+                } catch (e) {}
+              }
+              onOpenVoiceMode();
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f0edff] dark:bg-[#1a1636] hover:bg-[#e5e1ff] dark:hover:bg-[#231e4a] border border-[#dcd8f8]/60 dark:border-[#382b6b]/40 rounded-full text-xs font-extrabold text-[#794ef7] dark:text-[#a78bfa] transition-all cursor-pointer shadow-sm active:scale-95 group"
+            title="Start Voice Conversation (ChatGPT Style)"
+          >
+            <Headphones size={15} className="text-[#794ef7] dark:text-[#a78bfa] group-hover:scale-110 transition-transform" />
+            <span className="hidden sm:inline">Voice Mode</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          </button>
+        )}
+
         {/* Theme Toggle Button (Lucide Sun/Moon icon) */}
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}

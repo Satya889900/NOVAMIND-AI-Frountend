@@ -451,6 +451,20 @@ export function ChatMessage({ message }: ChatMessageProps) {
                         {copied ? 'Copied!' : 'Copy Text'}
                       </span>
                     </button>
+                    {message.content && (
+                      <button
+                        onClick={handleSpeak}
+                        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer text-xs font-semibold ${
+                          isPlayingSpeech
+                            ? 'text-indigo-600 dark:text-indigo-400 animate-pulse font-bold'
+                            : 'hover:text-[#794ef7] dark:hover:text-[#a78bfa]'
+                        }`}
+                        title={isPlayingSpeech ? 'Stop reading' : 'Read aloud'}
+                      >
+                        {isPlayingSpeech ? <VolumeX size={13} /> : <Volume2 size={13} />}
+                        <span>{isPlayingSpeech ? 'Stop Voice' : 'Read Aloud'}</span>
+                      </button>
+                    )}
                     <button
                       className="p-1 hover:text-[#794ef7] dark:hover:text-[#a78bfa] transition-colors cursor-pointer"
                       title="Like"
